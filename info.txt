@@ -1,0 +1,53 @@
+Music Metadata Organization project
+
+Requirements:
+	1) Scan all Music Folders
+	2) Attach All Metadata info to the ID3v2 tags (Use Name and Artist as keys. )
+	3) Retrieve Album Art (where possible)
+    4) Rename files to "[Artist Name] - [Song Name].[Extension]"
+    5) Identify files without Metadata
+
+Actions:
+    - QuickCheck: scans a given dir and returns info on the files present without changing anything
+    - FixMetadata: Fixes the tag of the files given
+    - GetCoverArt: Attempts to retrieve cover art data for all files
+    - RenameAndOrganize: Renames all files to the standard format ("[Artist Name] - [Song Name].[Extension]")
+    - IdentifyUnknown: Checks which songs have wrong Metadata and for which it is impossible to determine automatically (i.e. needs human interaction)
+
+Sources:
+    MusicBrainz API https://wiki.musicbrainz.org/Development/XML_Web_Service/Version_2
+    AllMusic http://www.allmusic.com/
+    Discogs https://www.discogs.com/developers/
+
+Dependencies:
+    cmdline parser
+    XML AND JSON Parsing library
+    Good Logger
+    ID3v2 Tagger
+    Good REST library
+
+
+Structs:
+    Metadata{
+        TagType
+
+        Name
+        Artist
+        Genre
+        Duration
+        Album
+        CoverArt
+        TrackNumber
+        Date
+        Composer
+
+        IsComplete
+        IsCorrect
+    }
+    Song{
+        Metadata
+        Extension
+        Path
+        Filename
+    }
+    
