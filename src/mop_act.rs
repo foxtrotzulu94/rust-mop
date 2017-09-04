@@ -48,7 +48,13 @@ pub fn quick_check(curr_dir: String){
     let base : f64 = 1024.0;
     let MB = base.powi(2);
 
+    let mut total_size : u64 = 0;
+    let mut total_num = 0;
     for (key,val) in count.iter(){
-        info!("{}: files={: <6} \t size={:.2}MB", key, val.num, val.bytes as f64/MB);
+        info!("{:<3}: files={: <6} \t size={:.2}MB", key, val.num, val.bytes as f64/MB);
+        total_num+=val.num;
+        total_size+=val.bytes;
     }
+    
+    info!("TOTAL: {} files - {:.2} MB",total_num, total_size as f64 / MB);
 }
