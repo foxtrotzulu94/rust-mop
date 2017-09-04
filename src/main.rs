@@ -67,10 +67,11 @@ fn main(){
 
     init_logging(args.value_of("log").unwrap_or("warn"));
     info!("Starting up MOP");
+    let working_directory = String::from(args.value_of("directory").unwrap());
 
     //TODO: Complete this match!
     match args.subcommand_name() {
-        Some("check") => mop_act::quick_check(String::from(args.value_of("directory").unwrap())),
+        Some("check") => mop_act::quick_check(working_directory),
         None        => panic!("No subcommand was used - Not supported yet!"),
         _           => panic!("The subcommand that was used that is not supported yet"),
     }
