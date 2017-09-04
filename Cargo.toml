@@ -1,6 +1,6 @@
 [package]
 
-name = "metadata_organization_program"
+name = "mop"
 version = "0.0.1"
 authors = [ "Javier Fajardo <javier@fajardo.io>" ]
 
