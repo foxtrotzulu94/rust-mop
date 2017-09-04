@@ -5,8 +5,9 @@ version = "0.0.1"
 authors = [ "Javier Fajardo <javier@fajardo.io>" ]
 
 [dependencies]
-log = "0.3"
-env_logger = "0.3"
+log = "*"
+env_logger = "*"
+chrono = "0.4"
 clap = "2"
 json = "*"
 xml-rs = "0.6"
