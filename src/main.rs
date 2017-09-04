@@ -70,7 +70,7 @@ fn main(){
 
     //TODO: Complete this match!
     match args.subcommand_name() {
-        Some("check") => mop_act::quick_check(String::from("")),
+        Some("check") => mop_act::quick_check(String::from(args.value_of("directory").unwrap())),
         None        => panic!("No subcommand was used - Not supported yet!"),
         _           => panic!("The subcommand that was used that is not supported yet"),
     }
