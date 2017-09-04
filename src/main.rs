@@ -14,8 +14,6 @@ use env_logger::LogBuilder;
 use chrono::prelude::*;
 use clap::{Arg, App, SubCommand};
 
-use mop_structs::Metadata as Metadata;
-
 fn init_logging(log_level: &str){
     let format = |record: &LogRecord| {
         let dt = Local::now();
@@ -45,6 +43,7 @@ fn main(){
                         .subcommand(SubCommand::with_name("check")
                                     .about("Verify the given directory and print info about it"))
                         .subcommand(SubCommand::with_name("clean")
+                                    .aliases(&["fix"])
                                     .about("Do a full fix of all file metadata"))
                         .subcommand(SubCommand::with_name("cover-art")
                                     .about("Retrieve the cover art for all file, if possible"))
@@ -72,6 +71,7 @@ fn main(){
     //TODO: Complete this match!
     match args.subcommand_name() {
         Some("check") => mop_act::quick_check(working_directory),
+        Some("clean") => mop_act::fix_metadata(working_directory),
         None        => panic!("No subcommand was used - Not supported yet!"),
         _           => panic!("The subcommand that was used that is not supported yet"),
     }
