@@ -20,11 +20,11 @@ Sources:
     Discogs https://www.discogs.com/developers/
 
 Dependencies:
-    cmdline parser
-    XML AND JSON Parsing library
-    Good Logger
-    ID3v2 Tagger
-    Good REST library
+    clap-rs - cmdline parser
+    json-rust & XML AND JSON Parsing library
+    log crate - Good Logger
+    id3 - ID3v2 Tagger
+    curl-rust - Good REST library
 
 
 Structs:

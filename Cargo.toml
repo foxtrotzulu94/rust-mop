@@ -3,3 +3,12 @@
 name = "metadata_organization_program"
 version = "0.0.1"
 authors = [ "Javier Fajardo <javier@fajardo.io>" ]
+
+[dependencies]
+log = "0.3"
+env_logger = "0.3"
+clap = "2"
+json = "*"
+xml-rs = "0.6"
+id3 = "0.1.12"
+curl = "*"
