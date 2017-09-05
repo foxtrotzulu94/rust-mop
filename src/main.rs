@@ -4,6 +4,7 @@ extern crate env_logger;
 extern crate chrono;
 extern crate clap;
 extern crate curl;
+extern crate xml;
 
 mod mop_structs;
 mod online_src;
