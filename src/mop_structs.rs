@@ -53,6 +53,10 @@ impl SongFile{
             && !genre.is_empty() && !(genre.contains("(") || genre.contains(")"))
             && year>1800; //Reasonably enough, I wouldn't catalogue pre-1800 music
     }
+
+    pub fn get_filepath_str(&self) -> Option<&str>{
+        return self.file_path.to_str();
+    }
 }
 
 impl fmt::Display for SongFile {

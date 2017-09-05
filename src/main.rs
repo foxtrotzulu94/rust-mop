@@ -3,9 +3,10 @@ extern crate log;
 extern crate env_logger;
 extern crate chrono;
 extern crate clap;
+extern crate curl;
 
 mod mop_structs;
-//mod online_src; //<- WIP
+mod online_src;
 mod mop_act;
 
 use std::env;

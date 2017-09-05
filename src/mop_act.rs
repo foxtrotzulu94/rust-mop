@@ -2,7 +2,7 @@
 
 extern crate id3;
 
-//use online_src;
+use online_src::retrieve_metadata_online;
 use mop_structs::SongFile;
 
 use std::io;
@@ -123,10 +123,24 @@ pub fn fix_metadata(working_dir: String){
     }
 
     //Testing that this works
-    //retrieve_metadata_online(&song_list[0]);
-    for entry in song_list{
-        if !entry.is_metadata_complete() {
-            warn!("{}\n",entry);
+    let mut unchanged_files : Vec<SongFile> = Vec::new();
+    for a_song in song_list{
+        if !a_song.is_metadata_complete(){
+            match retrieve_metadata_online(&a_song){
+                Ok(val) => info!("SUCCESS"),
+                Err(e) => {
+                    //Do we STILL have incomplete metadata?
+                    if !a_song.is_metadata_complete(){
+                        error!("{} | PATH={}", e, a_song.get_filepath_str().unwrap());
+                        error!("{}",a_song);
+                        unchanged_files.push(a_song);
+                    }
+                },
+            };
+            //Do only one
+            break;
+        } else {
+            info!("Skipping '{} - {}'", a_song.metadata.artist().unwrap(), a_song.metadata.title().unwrap());
         }
     }    
 }
