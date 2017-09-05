@@ -2,7 +2,7 @@
 
 extern crate id3;
 
-use online_src::retrieve_metadata_online;
+use mop_online::retrieve_metadata_online;
 use mop_structs::SongFile;
 
 use std::io;

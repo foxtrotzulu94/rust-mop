@@ -6,8 +6,10 @@ extern crate clap;
 extern crate curl;
 extern crate xml;
 
+mod src_music_brainz;
+mod src_allmusic;
 mod mop_structs;
-mod online_src;
+mod mop_online;
 mod mop_act;
 
 use std::env;
