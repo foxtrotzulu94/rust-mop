@@ -7,6 +7,15 @@ use std::string::String;
 use std::time::Duration;
 use std::path::{Path,PathBuf};
 
+macro_rules! safe_expand_tag {
+    ($x:expr, $y:expr) => {
+        match $x{
+            None => $y,
+            Some(value) => value,
+        };
+    }
+}
+
 pub struct SongFile{
     pub metadata: id3::Tag,
     extension: String,
@@ -33,10 +42,11 @@ impl SongFile{
     pub fn is_metadata_complete(&self) -> bool{
         //The important fields are: Title, Artist, Genre and Year
         let tag = &self.metadata;
-        let artist = tag.artist().unwrap();
-        let title = tag.title().unwrap();
-        let genre = tag.genre().unwrap();
-        let year = tag.year().unwrap();
+        let year = safe_expand_tag!(tag.year(), 0);
+        let genre = safe_expand_tag!(tag.genre(), "");
+        let album = safe_expand_tag!(tag.album(), "");
+        let artist = safe_expand_tag!(tag.artist(), "");
+        let title = safe_expand_tag!(tag.title(), "");
 
         return !artist.is_empty()
             && !title.is_empty()
@@ -49,12 +59,12 @@ impl fmt::Display for SongFile {
     // This trait requires `fmt` with this exact signature.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let tag = &self.metadata;
-        write!(f, "Title: {}\nArtist: {}\nAlbum: {}\nGenre: {}\nYear: {}\nPath:{}", 
-            tag.title().unwrap(), 
-            tag.artist().unwrap(), 
-            tag.album().unwrap(),
-            tag.genre().unwrap(),
-            tag.year().unwrap(), 
+        write!(f, "\nTitle: {}\nArtist: {}\nAlbum: {}\nGenre: {}\nYear: {}\nPath:{}", 
+            safe_expand_tag!(tag.title(), "N/A"), 
+            safe_expand_tag!(tag.artist(), "N/A"), 
+            safe_expand_tag!(tag.album(), "N/A"),
+            safe_expand_tag!(tag.genre(), "N/A"),
+            safe_expand_tag!(tag.year(), 0), 
             self.file_path.display())
     }
 }

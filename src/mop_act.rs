@@ -2,9 +2,11 @@
 
 extern crate id3;
 
-use mop_structs;
+//use online_src;
+use mop_structs::SongFile;
 
 use std::io;
+use std::vec;
 use std::fs::{self, DirEntry};
 use std::path::Path;
 use std::string::String;
@@ -18,15 +20,32 @@ struct FileCount{
 ///Checks whether the given extension is acceptable by MOP
 fn is_audio_extension(ext: &str) -> bool{
     let ret_val = match ext {
-        "mp3"|"ogg" => true,
-        "aac"|"mp4" => {
-            warn!("Extension not yet supported");
+        "mp3" => true,
+        "aac"|"mp4"|"ogg" => {
+            warn!("Extension not yet supported: {}",ext);
             false
         }
         _ => false,
     };
 
     return ret_val;
+}
+
+fn visit_dirs_test(dir: &Path, func: &mut FnMut(&Path)) -> io::Result<()> {
+    
+    if dir.is_dir() {
+        for entry in fs::read_dir(dir)? {
+            let entry = entry?;
+            let path = entry.path();
+            if path.is_dir() {
+                visit_dirs_test(&path, func);
+            } else {
+                func(&path);
+            }
+        }
+    }
+
+    Ok(())
 }
 
 fn visit_dirs(dir: &Path) -> io::Result<(HashMap<String,FileCount>)> {
@@ -81,22 +100,33 @@ pub fn quick_check(curr_dir: String){
 }
 
 pub fn fix_metadata(working_dir: String){
+    let cleaned_path = fs::canonicalize(working_dir.as_str()).unwrap();
+    let working_path = cleaned_path.as_path();
     //TODO:
     // For every dir, filter music files, then fix the metadata on music files
 
-    for entry in fs::read_dir(working_dir).unwrap() {
-        let entry = entry.unwrap();
-        let path = entry.path();
-        let safe_ext = path.extension().unwrap().to_str().unwrap().to_string().to_lowercase();
-        
-        if !path.is_dir() && is_audio_extension(safe_ext.as_str()) {
-            //Do one and then quit
-            let /*mut*/ song_file = mop_structs::SongFile::make(path.as_path());
-            // song_file.metadata.set_genre("R&B");
-            // song_file.save();
-            info!("\n{}",song_file);
-            info!("Is complete: {}",song_file.is_metadata_complete());
-            break;
-        }
+    //Build the list of songs
+    let mut song_list : Vec<SongFile> = Vec::new();
+    {    
+        //NOTE: Borrow song_list for a short duration and then give it back at the end of the scope
+        let mut song_accumulator = |some_path : &Path| {
+            if some_path.is_dir(){
+                return;
+            }
+            let safe_ext = some_path.extension().unwrap().to_str().unwrap().to_string().to_lowercase();
+            if is_audio_extension(safe_ext.as_str()) {
+                let song_file = SongFile::make(some_path);
+                song_list.push(song_file);
+            }
+        };
+        visit_dirs_test(working_path, &mut song_accumulator);
     }
+
+    //Testing that this works
+    //retrieve_metadata_online(&song_list[0]);
+    for entry in song_list{
+        if !entry.is_metadata_complete() {
+            warn!("{}\n",entry);
+        }
+    }    
 }

@@ -5,6 +5,7 @@ extern crate chrono;
 extern crate clap;
 
 mod mop_structs;
+//mod online_src; //<- WIP
 mod mop_act;
 
 use std::env;
@@ -23,9 +24,9 @@ fn init_logging(log_level: &str){
     let mut builder = LogBuilder::new();
     builder.format(format).filter(None, LogLevelFilter::Info);
     
-    //If building in debug, force debug
+    //If building in debug, force info (debug is too verbose)
     if cfg!(debug_assertions) {
-        builder.parse("debug");
+        builder.parse("info");
     } else {
         builder.parse(log_level);
     }
