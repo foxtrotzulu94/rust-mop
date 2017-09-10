@@ -16,6 +16,35 @@ macro_rules! safe_expand_tag {
     }
 }
 
+pub struct BasicMetadata{
+    //The assumption is that the program is using title+artist as a key in all lookups
+    // Therefore it must be correct to begin with and must not be changed at all!
+    // title: String,
+    // artist: String,
+    pub genre: String,
+    pub album: String,
+    pub track_number: u32,
+    pub date: i32,
+    pub composer: String,
+}
+
+impl BasicMetadata{
+    pub fn new() -> BasicMetadata{
+        return BasicMetadata{
+            genre : String::new(),
+            album : String::new(),
+            track_number : 0,
+            date : 0,
+            composer : String::new(),
+        }
+    }
+
+    pub fn has_some_data(&self) -> bool{
+        return !self.genre.is_empty() || !self.album.is_empty() || !self.composer.is_empty() 
+            || self.track_number > 0 || self.date > 1800;
+    }
+}
+
 pub struct SongFile{
     pub metadata: id3::Tag,
     extension: String,
@@ -56,6 +85,22 @@ impl SongFile{
 
     pub fn get_filepath_str(&self) -> Option<&str>{
         return self.file_path.to_str();
+    }
+
+    pub fn set_basic_metadata(&mut self, ext_data : BasicMetadata){
+        let mut metadata = &mut self.metadata;
+        metadata.set_album(ext_data.album);
+        let date_timestamp = id3::Timestamp{ year: Some(ext_data.date), 
+            month: None, day: None, hour: None, minute: None, second: None };
+        metadata.set_date_recorded(date_timestamp.clone());
+        metadata.set_date_released(date_timestamp.clone());
+        metadata.set_genre(ext_data.genre);
+        metadata.set_track(ext_data.track_number);
+
+        //Loose strings here
+        let album_artist = String::from(metadata.artist().unwrap());
+        metadata.set_album_artist(album_artist);
+        //TODO: Add tag to identify its been through MOP
     }
 }
 

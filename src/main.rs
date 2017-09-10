@@ -5,6 +5,7 @@ extern crate chrono;
 extern crate clap;
 extern crate curl;
 extern crate xml;
+extern crate url;
 
 mod src_music_brainz;
 mod src_allmusic;

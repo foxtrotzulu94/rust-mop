@@ -7,12 +7,27 @@ use std::io::{Error, ErrorKind, self};
 use std::str;
 use curl::easy::Easy;
 use xml::reader::{EventReader, XmlEvent};
+use url::percent_encoding::{utf8_percent_encode, percent_decode, DEFAULT_ENCODE_SET};
 
 pub fn get_user_agent() -> String{
     return format!("MetadataOrganizationProgram/{} ({})", env!("CARGO_PKG_VERSION"), env!("CARGO_PKG_AUTHORS"));
 }
 
-pub fn make_get_request(request_url: &String) -> io::Result<String>{
+pub fn percent_encode(some_url : &str) -> io::Result<String>{
+     let retval = utf8_percent_encode(some_url, DEFAULT_ENCODE_SET).collect();
+     Ok(retval)
+}
+
+pub fn make_get_request(endpoint : &str, request_path: &str) -> io::Result<String>{
+    //Only check that the request_path doesn't contain the endpoint
+    let mut request_url = String::from(endpoint);
+    if request_path.contains(endpoint){
+        request_url = String::from(request_path);
+    } else{
+        request_url.push_str(request_path);
+    }
+
+    info!("Performing GET request to: {}", request_url);
     let mut curly = Easy::new();
     let mut dst = Vec::new();
     {       
