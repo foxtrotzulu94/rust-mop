@@ -45,6 +45,18 @@ impl BasicMetadata{
     }
 }
 
+impl fmt::Display for BasicMetadata {
+    // This trait requires `fmt` with this exact signature.
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "\nAlbum: {} #({})\nGenre: {}\nYear: {}\n",
+            self.album,
+            self.track_number,
+            self.genre,
+            self.date
+        )
+    }
+}
+
 pub struct SongFile{
     pub metadata: id3::Tag,
     extension: String,
@@ -65,22 +77,34 @@ impl SongFile{
     }
 
     pub fn save(&mut self){
-        self.metadata.write_to_path(self.file_path.as_path());
+        let result = self.metadata.write_to_path(self.file_path.as_path());
+        assert!(result.is_ok());
+    }
+
+    pub fn has_search_key(&self) -> bool{
+        return !(
+            safe_expand_tag!(self.metadata.artist(), "").is_empty() 
+            || safe_expand_tag!(self.metadata.title(), "").is_empty()
+            );
     }
 
     pub fn is_metadata_complete(&self) -> bool{
         //The important fields are: Title, Artist, Genre and Year
         let tag = &self.metadata;
         let year = safe_expand_tag!(tag.year(), 0);
-        let genre = safe_expand_tag!(tag.genre(), "");
         let album = safe_expand_tag!(tag.album(), "");
         let artist = safe_expand_tag!(tag.artist(), "");
         let title = safe_expand_tag!(tag.title(), "");
 
         return !artist.is_empty()
             && !title.is_empty()
-            && !genre.is_empty() && !(genre.contains("(") || genre.contains(")"))
+            && !album.is_empty()
             && year>1800; //Reasonably enough, I wouldn't catalogue pre-1800 music
+    }
+
+    pub fn has_genre(&self) -> bool{
+        let genre = safe_expand_tag!(self.metadata.genre(), "");
+        return !genre.is_empty() && !(genre.contains("(") || genre.contains(")"));
     }
 
     pub fn get_filepath_str(&self) -> Option<&str>{
@@ -92,8 +116,8 @@ impl SongFile{
         metadata.set_album(ext_data.album);
         let date_timestamp = id3::Timestamp{ year: Some(ext_data.date), 
             month: None, day: None, hour: None, minute: None, second: None };
-        metadata.set_date_recorded(date_timestamp.clone());
-        metadata.set_date_released(date_timestamp.clone());
+        metadata.set_date_released(date_timestamp);
+        metadata.set_year(ext_data.date as usize);
         metadata.set_genre(ext_data.genre);
         metadata.set_track(ext_data.track_number);
 

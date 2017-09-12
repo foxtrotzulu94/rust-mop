@@ -66,6 +66,14 @@ impl XmlNode{
         let list = self.children.get(&String::from(key)).unwrap();
         return list;
     }
+
+    pub fn has_matching_child(&self, key: &str) -> bool{
+        let check = self.children.get(&String::from(key));
+        match check{
+            Some(valid) => return true,
+            None => return false,
+        }
+    }
 }
 
 impl Index<usize> for XmlNode {

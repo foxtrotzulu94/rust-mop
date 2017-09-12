@@ -47,16 +47,23 @@ pub fn make_get_request(endpoint : &str, request_path: &str) -> io::Result<Strin
     Ok(ret_val)
 }
 
-pub fn retrieve_metadata_online(song_file: &SongFile) -> io::Result<()>{
+pub fn retrieve_metadata_online(song_file: &mut SongFile) -> io::Result<()>{
+    if !song_file.has_search_key(){
+        return Err(Error::new(ErrorKind::InvalidInput, "SongFile does not have appropriate search key filled"))
+    }
+
     //TODO: Do a bit more generic approach
     let musicbrainz = src_music_brainz::check(song_file);
     if musicbrainz.is_ok(){
         return Ok(());
     }
-    let all_music = src_allmusic::check(song_file);
-    if all_music.is_ok(){
-        return Ok(());
+    else{
+        error!("{:?}",musicbrainz);
     }
+    // let all_music = src_allmusic::check(song_file);
+    // if all_music.is_ok(){
+    //     return Ok(());
+    // }
 
     //If you get to this point, return an error
     Err(Error::new(ErrorKind::NotFound, "SongFile was unchanged"))

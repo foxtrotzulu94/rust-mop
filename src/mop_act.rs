@@ -124,9 +124,9 @@ pub fn fix_metadata(working_dir: String){
 
     //Testing that this works
     let mut unchanged_files : Vec<SongFile> = Vec::new();
-    for a_song in song_list{
+    for mut a_song in song_list{
         if !a_song.is_metadata_complete(){
-            match retrieve_metadata_online(&a_song){
+            match retrieve_metadata_online(&mut a_song){
                 Ok(val) => info!("SUCCESS"),
                 Err(e) => {
                     //Do we STILL have incomplete metadata?
