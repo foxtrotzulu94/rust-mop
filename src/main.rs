@@ -9,6 +9,7 @@ extern crate url;
 
 mod src_music_brainz;
 mod src_allmusic;
+mod xml_wrap;
 mod mop_structs;
 mod mop_online;
 mod mop_act;
@@ -19,6 +20,8 @@ use log::{LogRecord, LogLevelFilter};
 use env_logger::LogBuilder;
 use chrono::prelude::*;
 use clap::{Arg, App, SubCommand};
+
+use xml_wrap::{XmlMap,XmlNode};
 
 fn init_logging(log_level: &str){
     let format = |record: &LogRecord| {
@@ -38,6 +41,22 @@ fn init_logging(log_level: &str){
     builder.init().unwrap();
 }
 
+fn test_wrap(){
+    let testy = "<note>
+  <to>Tove</to>
+  <from>Jani</from>
+  <heading>Reminder</heading>
+  <body>Don't forget me this weekend!</body>
+</note>";
+    let wrappy = XmlMap::from_str(testy);
+    warn!("Built XML");
+    let init = wrappy.root;
+    warn!("Init");
+    let node = &init["note"]["to"];
+    warn!("Node val {}", node.value);
+    assert!(node.value=="Tove");
+}
+
 fn main(){
     //Parse command line args and check the sub command
     let args = App::new("MOP - Metadata Organization Program")
@@ -55,6 +74,8 @@ fn main(){
                                     .about("Retrieve the cover art for all file, if possible"))
                         .subcommand(SubCommand::with_name("rename")
                                     .about("Rename the file in some specific manner"))
+                        .subcommand(SubCommand::with_name("dev")
+                                    .about("DevCommand :)"))
                         .arg(Arg::with_name("directory")
                             .short("i")
                             .long("working-dir")
@@ -78,6 +99,7 @@ fn main(){
     match args.subcommand_name() {
         Some("check") => mop_act::quick_check(working_directory),
         Some("clean") => mop_act::fix_metadata(working_directory),
+        Some("dev") => test_wrap(),
         None        => panic!("No subcommand was used - Not supported yet!"),
         _           => panic!("The subcommand that was used that is not supported yet"),
     }
