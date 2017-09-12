@@ -7,7 +7,7 @@ use std::io::{Error, ErrorKind, self};
 use std::str;
 use curl::easy::Easy;
 use xml::reader::{EventReader, XmlEvent};
-use url::percent_encoding::{utf8_percent_encode, percent_decode, DEFAULT_ENCODE_SET};
+use url::percent_encoding::{utf8_percent_encode, QUERY_ENCODE_SET, DEFAULT_ENCODE_SET};
 
 pub fn get_user_agent() -> String{
     return format!("MetadataOrganizationProgram/{} ({})", env!("CARGO_PKG_VERSION"), env!("CARGO_PKG_AUTHORS"));
@@ -41,6 +41,10 @@ pub fn make_get_request(endpoint : &str, request_path: &str) -> io::Result<Strin
             }).unwrap();
         connection.perform().unwrap(); 
     }
+    let response_code = curly.response_code().unwrap();
+    if response_code >= 400{
+        return Err(Error::new(ErrorKind::InvalidData, format!("CURL Request returned error {}",response_code)));
+    }
 
     //If we've made it this far, let's risk the panic!
     let ret_val = String::from_utf8(dst.clone()).unwrap();
@@ -52,18 +56,17 @@ pub fn retrieve_metadata_online(song_file: &mut SongFile) -> io::Result<()>{
         return Err(Error::new(ErrorKind::InvalidInput, "SongFile does not have appropriate search key filled"))
     }
 
-    //TODO: Do a bit more generic approach
-    let musicbrainz = src_music_brainz::check(song_file);
-    if musicbrainz.is_ok(){
-        return Ok(());
+    let online_sources = [src_music_brainz::check, src_allmusic::check].to_vec();
+
+    for check in online_sources{
+        let result = check(song_file);
+        match result {
+            Err(expr) => warn!("{}", expr),
+            Ok(e) => {
+                return Ok(());
+            },
+        }
     }
-    else{
-        error!("{:?}",musicbrainz);
-    }
-    // let all_music = src_allmusic::check(song_file);
-    // if all_music.is_ok(){
-    //     return Ok(());
-    // }
 
     //If you get to this point, return an error
     Err(Error::new(ErrorKind::NotFound, "SongFile was unchanged"))

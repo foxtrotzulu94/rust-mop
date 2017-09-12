@@ -6,7 +6,6 @@ use mop_online::retrieve_metadata_online;
 use mop_structs::SongFile;
 
 use std::io;
-use std::vec;
 use std::fs::{self, DirEntry};
 use std::path::Path;
 use std::string::String;
@@ -123,11 +122,11 @@ pub fn fix_metadata(working_dir: String){
     }
 
     //Testing that this works
+    //TODO: add the reason for rejection
     let mut unchanged_files : Vec<SongFile> = Vec::new();
     for mut a_song in song_list{
         if !a_song.is_metadata_complete(){
             match retrieve_metadata_online(&mut a_song){
-                Ok(val) => info!("SUCCESS"),
                 Err(e) => {
                     //Do we STILL have incomplete metadata?
                     if !a_song.is_metadata_complete(){
@@ -136,11 +135,12 @@ pub fn fix_metadata(working_dir: String){
                         unchanged_files.push(a_song);
                     }
                 },
+                _ => info!("SUCCESS"),
             };
-            //Do only one
-            break;
+            // //Do only one
+            // break;
         } else {
-            info!("Skipping '{} - {}'", a_song.metadata.artist().unwrap(), a_song.metadata.title().unwrap());
+            info!("Skipping '{} - {}' as complete", a_song.metadata.artist().unwrap(), a_song.metadata.title().unwrap());
         }
     }    
 }

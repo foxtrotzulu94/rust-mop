@@ -1,9 +1,10 @@
 //All the functions needed to use the MusicBrainz API (https://musicbrainz.org/doc/Development/XML_Web_Service/Version_2)
+#[macro_use] use mop_macro;
 use mop_structs::{SongFile,BasicMetadata};
 use mop_online::{make_get_request, percent_encode};
 use xml_wrap::{XmlMap};
 
-use std::str;
+use std::{str,time,thread};
 use std::io::{Error, ErrorKind, self};
 use xml::reader::{EventReader, XmlEvent};
 
@@ -54,9 +55,14 @@ fn find_recording_data(raw_data: &str) -> io::Result<BasicMetadata>{
     let mut recording_list : Vec<BasicMetadata> = Vec::new();
     
     let data = XmlMap::from_str(raw_data);
-    let possible_recordings = &data.root["metadata"]["recording-list"].get_matching_children("recording");
+    let recording_list = &data.root["metadata"]["recording-list"];
+    let num_recordings = recording_list.attributes["count"].parse::<i32>().unwrap();
+    if num_recordings < 1{
+        return Err(Error::new(ErrorKind::NotFound, "No matching recordings were found"));
+    }
 
     //Select best one (by default, go for first release ever)
+    let possible_recordings = &recording_list.get_matching_children("recording");
     let mut best_candidate = BasicMetadata::new();
     best_candidate.date = 9001;
     let min_confidence = 90;
@@ -92,8 +98,9 @@ fn find_recording_data(raw_data: &str) -> io::Result<BasicMetadata>{
         if release_year > 1800 && release_year < best_candidate.date{
             best_candidate.date = release_year;
             best_candidate.album = (&release["title"]).value.clone();
-            best_candidate.track_number = (&release["medium-list"]["medium"]["track-list"]["track"]["number"])
-                .value.parse::<u32>().unwrap();
+            let track_number = (&release["medium-list"]["medium"]["track-list"]["track"]["number"])
+                .value.parse::<u32>();
+            best_candidate.track_number = read_result!(track_number,0);
         }
     }
 
@@ -107,11 +114,13 @@ fn find_recording_data(raw_data: &str) -> io::Result<BasicMetadata>{
 fn determine_artist_id(song_file: &SongFile) -> io::Result<String>{
     let mut artist_request = String::new();
     artist_request.push_str("artist?query=");
-    let sanitized_artist_name = percent_encode(song_file.metadata.artist().unwrap()).unwrap();
+    let mut sanitized_artist_name = percent_encode(
+        song_file.metadata.artist().unwrap().replace("/"," ").as_str()
+        ).unwrap();
     artist_request.push_str(&sanitized_artist_name);
     debug!("Request-url:{}",artist_request.as_str());
 
-    let curly_result = make_get_request(API_ENDPOINT, &artist_request).unwrap();
+    let curly_result = make_get_request(API_ENDPOINT, &artist_request)?;
     let artist_id = find_artist_id(curly_result.as_str())?;
 
     Ok(artist_id)
@@ -132,16 +141,20 @@ fn check_artist_recording(song_file: &SongFile, artist_id: String) -> io::Result
 }
 
 pub fn check(song_file: &mut SongFile) -> io::Result<()>{
-    info!("Checking '{} - {}'", song_file.metadata.artist().unwrap(), song_file.metadata.title().unwrap());
-
+    info!("Checking '{} - {}' with MusicBrainz", song_file.metadata.artist().unwrap(), song_file.metadata.title().unwrap());
+    
+    //MusicBrainz requires us to emit less than 1 request per second (on average)
+    // To do so, we have to sleep after each of these methods are called
     let artist_id = determine_artist_id(song_file)?;
-    warn!("{} - Artist ID={}",song_file.metadata.artist().unwrap(), artist_id);
+    thread::sleep(time::Duration::from_millis(750));
+    debug!("{} - Artist ID={}",song_file.metadata.artist().unwrap(), artist_id);
 
     let recording_metadata = check_artist_recording(song_file, artist_id)?;
+    thread::sleep(time::Duration::from_millis(250));
     song_file.set_basic_metadata(recording_metadata);
-    warn!("{}",song_file);
-    // song_file.save();
+    debug!("{}",song_file);
+    //song_file.save();
 
     // Ok(())
-    Err(Error::new(ErrorKind::Other, "This isn't implemented."))
+    Err(Error::new(ErrorKind::Other, "Check isn't implemented."))
 }

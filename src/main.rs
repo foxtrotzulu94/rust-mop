@@ -7,6 +7,19 @@ extern crate curl;
 extern crate xml;
 extern crate url;
 
+#[macro_use]
+pub mod mop_macro{
+    #[macro_export]
+    macro_rules! read_result {
+        ($x:expr, $y:expr) => {
+            match $x{
+                Err(e) => $y,
+                Ok(value) => value,
+            };
+        }
+    }
+}
+
 mod src_music_brainz;
 mod src_allmusic;
 mod xml_wrap;
