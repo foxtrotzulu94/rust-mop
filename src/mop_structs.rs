@@ -2,10 +2,15 @@
 
 extern crate id3;
 
+use id3::{Tag, Frame};
+use id3::frame::Content;
+
 use std::fmt;
 use std::string::String;
 use std::time::Duration;
 use std::path::{Path,PathBuf};
+
+use mop_online::get_user_agent;
 
 macro_rules! safe_expand_tag {
     ($x:expr, $y:expr) => {
@@ -93,6 +98,7 @@ impl SongFile{
         let tag = &self.metadata;
         let year = safe_expand_tag!(tag.year(), 0);
         let album = safe_expand_tag!(tag.album(), "");
+        let genre = safe_expand_tag!(self.metadata.genre(), "");
         let artist = safe_expand_tag!(tag.artist(), "");
         let title = safe_expand_tag!(tag.title(), "");
 
@@ -114,9 +120,6 @@ impl SongFile{
     pub fn set_basic_metadata(&mut self, ext_data : BasicMetadata){
         let mut metadata = &mut self.metadata;
         metadata.set_album(ext_data.album);
-        let date_timestamp = id3::Timestamp{ year: Some(ext_data.date), 
-            month: None, day: None, hour: None, minute: None, second: None };
-        metadata.set_date_released(date_timestamp);
         metadata.set_year(ext_data.date as usize);
         metadata.set_genre(ext_data.genre);
         metadata.set_track(ext_data.track_number);
@@ -124,7 +127,10 @@ impl SongFile{
         //Loose strings here
         let album_artist = String::from(metadata.artist().unwrap());
         metadata.set_album_artist(album_artist);
-        //TODO: Add tag to identify its been through MOP
+        
+        //Can't do this yet due to: https://github.com/jameshurst/rust-id3/issues/17
+        // let comment_frame = id3::Frame::with_content("COM", Content::Text(get_user_agent()));
+        // metadata.push(comment_frame);
     }
 }
 

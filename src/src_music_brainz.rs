@@ -1,12 +1,10 @@
 //All the functions needed to use the MusicBrainz API (https://musicbrainz.org/doc/Development/XML_Web_Service/Version_2)
-#[macro_use] use mop_macro;
 use mop_structs::{SongFile,BasicMetadata};
 use mop_online::{make_get_request, percent_encode};
 use xml_wrap::{XmlMap};
 
 use std::{str,time,thread};
 use std::io::{Error, ErrorKind, self};
-use xml::reader::{EventReader, XmlEvent};
 
 static API_ENDPOINT: &'static str = "https://musicbrainz.org/ws/2/";
 
@@ -20,7 +18,7 @@ fn find_artist_id(raw_data: &str) -> io::Result<String>{
     let possible_artists = &data.root["metadata"]["artist-list"].get_matching_children("artist");
 
     if possible_artists.len() < 1{
-        return Err(Error::new(ErrorKind::NotFound, "The Artist was not found on MusicBrainz"));
+        return Err(Error::new(ErrorKind::NotFound, "MusicBrainz: The Artist was not found"));
     }
 
     for an_artist in *possible_artists{
@@ -42,7 +40,7 @@ fn find_artist_id(raw_data: &str) -> io::Result<String>{
     }
 
     if artist_id.is_empty() {
-        return Err(Error::new(ErrorKind::NotFound, "The Artist ID was not found with enough confidence!"));
+        return Err(Error::new(ErrorKind::NotFound, "MusicBrainz: The Artist ID was not found with enough confidence!"));
     }
     //FIXME: Partially Uppercase the Genre
     Ok(artist_id)
@@ -58,7 +56,7 @@ fn find_recording_data(raw_data: &str) -> io::Result<BasicMetadata>{
     let recording_list = &data.root["metadata"]["recording-list"];
     let num_recordings = recording_list.attributes["count"].parse::<i32>().unwrap();
     if num_recordings < 1{
-        return Err(Error::new(ErrorKind::NotFound, "No matching recordings were found"));
+        return Err(Error::new(ErrorKind::NotFound, "MusicBrainz: No matching recordings were found"));
     }
 
     //Select best one (by default, go for first release ever)
@@ -70,7 +68,12 @@ fn find_recording_data(raw_data: &str) -> io::Result<BasicMetadata>{
     for a_recording in *possible_recordings{
         let confidence = a_recording.attributes["score"].parse::<i32>().unwrap();
         if confidence < min_confidence{
-            debug!("Skipping possible recording. Not enough confidence");
+            debug!("MusicBrainz: Skipping possible recording. Not enough confidence");
+            continue;
+        }
+        if !a_recording.has_matching_child("release-list") || a_recording["release-list"].has_matching_child("release"){
+            //This is more of an error with MusicBrainz
+            debug!("MusicBrainz: Skipping recording that does not have releases");
             continue;
         }
 
@@ -89,7 +92,12 @@ fn find_recording_data(raw_data: &str) -> io::Result<BasicMetadata>{
 
         let release = &a_recording["release-list"]["release"];
         if !release.has_matching_child("date"){
-            debug!("Skipping possible recording. Date tag not found!");
+            debug!("MusicBrainz: Skipping possible recording. Date tag not found!");
+            continue;
+        }
+        let release_status = &release["status"].value.clone();
+        if release_status != "Official"{
+            debug!("MusicBrainz: Skipping bootleg recording");
             continue;
         }
 
@@ -105,7 +113,7 @@ fn find_recording_data(raw_data: &str) -> io::Result<BasicMetadata>{
     }
 
     if best_candidate.date == 9001{
-        return Err(Error::new(ErrorKind::NotFound, "Recording metadata was not found!"));
+        return Err(Error::new(ErrorKind::NotFound, "MusicBrainz: Recording metadata was not found!"));
     }
 
     Ok(best_candidate)
@@ -141,20 +149,19 @@ fn check_artist_recording(song_file: &SongFile, artist_id: String) -> io::Result
 }
 
 pub fn check(song_file: &mut SongFile) -> io::Result<()>{
-    info!("Checking '{} - {}' with MusicBrainz", song_file.metadata.artist().unwrap(), song_file.metadata.title().unwrap());
+    info!("MusicBrainz: Checking '{} - {}'", song_file.metadata.artist().unwrap(), song_file.metadata.title().unwrap());
     
     //MusicBrainz requires us to emit less than 1 request per second (on average)
     // To do so, we have to sleep after each of these methods are called
     let artist_id = determine_artist_id(song_file)?;
     thread::sleep(time::Duration::from_millis(750));
-    debug!("{} - Artist ID={}",song_file.metadata.artist().unwrap(), artist_id);
+    debug!("MusicBrainz: {} - Artist ID={}",song_file.metadata.artist().unwrap(), artist_id);
 
     let recording_metadata = check_artist_recording(song_file, artist_id)?;
     thread::sleep(time::Duration::from_millis(250));
     song_file.set_basic_metadata(recording_metadata);
-    debug!("{}",song_file);
-    //song_file.save();
+    debug!("MusicBrainz: {}",song_file);
+    song_file.save();
 
-    // Ok(())
-    Err(Error::new(ErrorKind::Other, "Check isn't implemented."))
+    Ok(())
 }

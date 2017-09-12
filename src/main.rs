@@ -1,5 +1,6 @@
 #[macro_use]
 extern crate log;
+extern crate id3;
 extern crate env_logger;
 extern crate chrono;
 extern crate clap;
@@ -82,7 +83,10 @@ fn main(){
                                     .about("Verify the given directory and print info about it"))
                         .subcommand(SubCommand::with_name("clean")
                                     .aliases(&["fix"])
-                                    .about("Do a full fix of all file metadata"))
+                                    .about("Do a full fix of all file metadata (except for genre)"))
+                        .subcommand(SubCommand::with_name("genre")
+                                    .aliases(&["fix-genre"])
+                                    .about("Appropriately assign Genre data."))
                         .subcommand(SubCommand::with_name("cover-art")
                                     .about("Retrieve the cover art for all file, if possible"))
                         .subcommand(SubCommand::with_name("rename")

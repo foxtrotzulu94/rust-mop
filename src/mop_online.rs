@@ -27,7 +27,7 @@ pub fn make_get_request(endpoint : &str, request_path: &str) -> io::Result<Strin
         request_url.push_str(request_path);
     }
 
-    info!("Performing GET request to: {}", request_url);
+    info!("MOP_Online: Performing GET request to: {}", request_url);
     let mut curly = Easy::new();
     let mut dst = Vec::new();
     {       
@@ -43,7 +43,7 @@ pub fn make_get_request(endpoint : &str, request_path: &str) -> io::Result<Strin
     }
     let response_code = curly.response_code().unwrap();
     if response_code >= 400{
-        return Err(Error::new(ErrorKind::InvalidData, format!("CURL Request returned error {}",response_code)));
+        return Err(Error::new(ErrorKind::InvalidData, format!("MOP_Online: CURL Request returned error {}",response_code)));
     }
 
     //If we've made it this far, let's risk the panic!
@@ -53,7 +53,7 @@ pub fn make_get_request(endpoint : &str, request_path: &str) -> io::Result<Strin
 
 pub fn retrieve_metadata_online(song_file: &mut SongFile) -> io::Result<()>{
     if !song_file.has_search_key(){
-        return Err(Error::new(ErrorKind::InvalidInput, "SongFile does not have appropriate search key filled"))
+        return Err(Error::new(ErrorKind::InvalidInput, "MOP_Online: SongFile does not have appropriate search key filled"))
     }
 
     let online_sources = [src_music_brainz::check, src_allmusic::check].to_vec();
@@ -69,5 +69,5 @@ pub fn retrieve_metadata_online(song_file: &mut SongFile) -> io::Result<()>{
     }
 
     //If you get to this point, return an error
-    Err(Error::new(ErrorKind::NotFound, "SongFile was unchanged"))
+    Err(Error::new(ErrorKind::NotFound, "MOP_Online: SongFile was unchanged"))
 }

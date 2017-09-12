@@ -7,5 +7,5 @@ use curl::easy::Easy;
 use xml::reader::{EventReader, XmlEvent};
 
 pub fn check(song_file: &mut SongFile) -> io::Result<()>{
-    Err(Error::new(ErrorKind::Other, "This isn't implemented."))
+    Err(Error::new(ErrorKind::Other, "AllMusic: This isn't implemented."))
 }
