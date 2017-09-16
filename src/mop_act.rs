@@ -30,14 +30,13 @@ fn is_audio_extension(ext: &str) -> bool{
     return ret_val;
 }
 
-fn visit_dirs_test(dir: &Path, func: &mut FnMut(&Path)) -> io::Result<()> {
-    
-    if dir.is_dir() {
-        for entry in fs::read_dir(dir)? {
+fn visit_path(path: &Path, func: &mut FnMut(&Path)) -> io::Result<()> {
+    if path.is_dir() {
+        for entry in fs::read_dir(path)? {
             let entry = entry?;
             let path = entry.path();
             if path.is_dir() {
-                visit_dirs_test(&path, func);
+                visit_path(&path, func)?;
             } else {
                 func(&path);
             }
@@ -47,35 +46,6 @@ fn visit_dirs_test(dir: &Path, func: &mut FnMut(&Path)) -> io::Result<()> {
     Ok(())
 }
 
-fn visit_dirs(dir: &Path) -> io::Result<(HashMap<String,FileCount>)> {
-    let mut count : HashMap<String,FileCount> = HashMap::new();
-
-    if dir.is_dir() {
-        for entry in fs::read_dir(dir)? {
-            let entry = entry?;
-            let path = entry.path();
-            if path.is_dir() {
-                let subcount = visit_dirs(&path)?;
-                for (key,val) in subcount.iter() {
-                    let ext_count = count.entry((*key).clone()).or_insert(FileCount{num: 0, bytes:0});
-                    (*ext_count).num += (*val).num;
-                    (*ext_count).bytes += (*val).bytes;
-                }
-            } else {
-                //info!("{}",path.display());
-                //info!("{}",path.extension().unwrap().to_str().unwrap().to_string().to_lowercase())
-                let safe_ext = path.extension().unwrap().to_str().unwrap().to_string().to_lowercase();
-                if is_audio_extension(safe_ext.as_str()) {
-                    let ext_count = count.entry(safe_ext).or_insert(FileCount{num: 0, bytes:0});
-                    (*ext_count).num+=1;
-                    (*ext_count).bytes+= entry.metadata().unwrap().len();
-                }
-            }
-        }
-    }
-    Ok((count))
-}
-
 pub fn quick_check(curr_dir: String){
     info!("Doing a quick check of {}",curr_dir);
 
@@ -83,26 +53,49 @@ pub fn quick_check(curr_dir: String){
     let cleaned_path = fs::canonicalize(curr_dir.as_str()).unwrap();
     let working_path = cleaned_path.as_path();
 
-    let count = visit_dirs(working_path).unwrap();
+    let mut file_collection : HashMap<String,FileCount> = HashMap::new();
+    {
+        let mut collector = |some_path : &Path| {
+            if some_path.is_dir(){
+                return;
+            }
+            let safe_ext = some_path.extension().unwrap().to_str().unwrap().to_string().to_lowercase();
+            if is_audio_extension(safe_ext.as_str()) {
+                let song_file = SongFile::make(some_path);
+                if !song_file.has_search_key(){
+                    error!("Title/Artist Missing: {}", song_file.get_filepath_str().unwrap());
+                }
+
+                let ext_count = file_collection.entry(safe_ext).or_insert(FileCount{num: 0, bytes:0});
+                (*ext_count).num+=1;
+                (*ext_count).bytes+= fs::metadata(some_path).unwrap().len();
+            }
+        };
+
+        match visit_path(working_path, &mut collector){
+            Ok(()) => info!("Finished scanning directories"),
+            Err(e) => error!("{}",e),
+        };
+    }
+
+    let count = file_collection;
     let base : f64 = 1024.0;
-    let MB = base.powi(2);
+    let mb = base.powi(2);
 
     let mut total_size : u64 = 0;
     let mut total_num = 0;
     for (key,val) in count.iter(){
-        info!("{:<3}: files={: <6} \t size={:.2}MB", key, val.num, val.bytes as f64/MB);
+        info!("{:<3}: files={: <6} \t size={:.2}MB", key, val.num, val.bytes as f64 / mb);
         total_num+=val.num;
         total_size+=val.bytes;
     }
 
-    info!("TOTAL: {} files - {:.2} MB",total_num, total_size as f64 / MB);
+    info!("TOTAL: {} files - {:.2} MB",total_num, total_size as f64 / mb);
 }
 
 pub fn fix_metadata(working_dir: String){
     let cleaned_path = fs::canonicalize(working_dir.as_str()).unwrap();
     let working_path = cleaned_path.as_path();
-    //TODO:
-    // For every dir, filter music files, then fix the metadata on music files
 
     //Build the list of songs
     let mut song_list : Vec<SongFile> = Vec::new();
@@ -115,10 +108,18 @@ pub fn fix_metadata(working_dir: String){
             let safe_ext = some_path.extension().unwrap().to_str().unwrap().to_string().to_lowercase();
             if is_audio_extension(safe_ext.as_str()) {
                 let song_file = SongFile::make(some_path);
-                song_list.push(song_file);
+                if !song_file.has_search_key(){
+                    error!("No Title/Artist for {}", song_file.get_filepath_str().unwrap());
+                } else {
+                    song_list.push(song_file);
+                }
             }
         };
-        visit_dirs_test(working_path, &mut song_accumulator);
+
+        match visit_path(working_path, &mut song_accumulator){
+            Ok(()) => info!("Finished scanning directories"),
+            Err(e) => error!("{}",e),
+        };
     }
 
     //Testing that this works
@@ -130,15 +131,14 @@ pub fn fix_metadata(working_dir: String){
                 Err(e) => {
                     //Do we STILL have incomplete metadata?
                     if !a_song.is_metadata_complete(){
-                        error!("{} | PATH={}", e, a_song.get_filepath_str().unwrap());
-                        error!("{}",a_song);
+                        error!("{} : {}", e, a_song.get_filepath_str().unwrap());
+                        // error!("{}",a_song);
                         unchanged_files.push(a_song);
                     }
                 },
                 _ => info!("SUCCESS"),
             };
-            // //Do only one
-            // break;
+
         } else {
             info!("Skipping '{} - {}' as complete", a_song.metadata.artist().unwrap(), a_song.metadata.title().unwrap());
         }

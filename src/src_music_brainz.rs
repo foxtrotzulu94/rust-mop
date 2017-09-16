@@ -67,13 +67,16 @@ fn find_recording_data(raw_data: &str) -> io::Result<BasicMetadata>{
     let mut tag_count = 0;
     for a_recording in *possible_recordings{
         let confidence = a_recording.attributes["score"].parse::<i32>().unwrap();
+        let recording_id = &a_recording.attributes["id"];
         if confidence < min_confidence{
-            debug!("MusicBrainz: Skipping possible recording. Not enough confidence");
+            info!("MusicBrainz: Skipping possible recording. Not enough confidence");
+            info!("Rec ID: {}", recording_id);
             continue;
         }
-        if !a_recording.has_matching_child("release-list") || a_recording["release-list"].has_matching_child("release"){
+        if !a_recording.has_matching_child("release-list") || !a_recording["release-list"].has_matching_child("release"){
             //This is more of an error with MusicBrainz
-            debug!("MusicBrainz: Skipping recording that does not have releases");
+            info!("MusicBrainz: Skipping recording that does not have releases");
+            info!("Rec ID: {}", recording_id);
             continue;
         }
 
@@ -92,12 +95,14 @@ fn find_recording_data(raw_data: &str) -> io::Result<BasicMetadata>{
 
         let release = &a_recording["release-list"]["release"];
         if !release.has_matching_child("date"){
-            debug!("MusicBrainz: Skipping possible recording. Date tag not found!");
+            info!("MusicBrainz: Skipping possible recording. Date tag not found!");
+            info!("Rec ID: {}", recording_id);
             continue;
         }
         let release_status = &release["status"].value.clone();
         if release_status != "Official"{
-            debug!("MusicBrainz: Skipping bootleg recording");
+            info!("MusicBrainz: Skipping bootleg recording");
+            info!("Rec ID: {}", recording_id);
             continue;
         }
 
@@ -142,7 +147,7 @@ fn check_artist_recording(song_file: &SongFile, artist_id: String) -> io::Result
     song_request.push_str(percent_encode(" AND arid%3A").unwrap().as_str()); //"%20AND%20arid%3A"
     song_request.push_str(artist_id.as_str());
     debug!("Request-url:{}",song_request.as_str());
-    let request_result = make_get_request(&API_ENDPOINT, &song_request).unwrap();
+    let request_result = make_get_request(&API_ENDPOINT, &song_request)?;
 
     let basic_metadata = find_recording_data(request_result.as_str())?;
     Ok(basic_metadata)
