@@ -59,7 +59,7 @@ pub fn retrieve_metadata_online(song_file: &mut SongFile) -> io::Result<()>{
 
     //[src_music_brainz::check, src_allmusic::check].to_vec();
     let mut online_sources : Vec<fn(&mut SongFile) -> io::Result<()>>	 = Vec::new();
-    online_sources.push(src_music_brainz::check);
+    // online_sources.push(src_music_brainz::check);
     online_sources.push(src_allmusic::check);
 
     for check in online_sources{

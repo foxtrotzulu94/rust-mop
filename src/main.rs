@@ -7,6 +7,7 @@ extern crate clap;
 extern crate curl;
 extern crate xml;
 extern crate url;
+extern crate select;
 
 #[macro_use]
 pub mod mop_macro{
