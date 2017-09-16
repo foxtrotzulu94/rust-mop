@@ -19,6 +19,16 @@ pub mod mop_macro{
             };
         }
     }
+    
+    #[macro_export]
+    macro_rules! safe_expand {
+    ($x:expr, $y:expr) => {
+        match $x{
+            None => $y,
+            Some(value) => value,
+        };
+    }
+}
 }
 
 mod src_music_brainz;

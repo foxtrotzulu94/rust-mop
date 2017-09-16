@@ -12,15 +12,6 @@ use std::path::{Path,PathBuf};
 
 use mop_online::get_user_agent;
 
-macro_rules! safe_expand_tag {
-    ($x:expr, $y:expr) => {
-        match $x{
-            None => $y,
-            Some(value) => value,
-        };
-    }
-}
-
 pub struct BasicMetadata{
     //The assumption is that the program is using title+artist as a key in all lookups
     // Therefore it must be correct to begin with and must not be changed at all!
@@ -98,25 +89,25 @@ impl SongFile{
 
     pub fn has_search_key(&self) -> bool{
         return !(
-            safe_expand_tag!(self.metadata.artist(), "").is_empty() 
-            || safe_expand_tag!(self.metadata.title(), "").is_empty()
+            safe_expand!(self.metadata.artist(), "").is_empty() 
+            || safe_expand!(self.metadata.title(), "").is_empty()
             );
     }
 
     pub fn is_metadata_complete(&self) -> bool{
         //The important fields are: Title, Artist, Genre and Year
         let tag = &self.metadata;
-        let mut year = safe_expand_tag!(tag.year(), 0);
+        let mut year = safe_expand!(tag.year(), 0);
         if year == 0{
             //If it doesn't have this tag, panic
-            let some_date = safe_expand_tag!(tag.date_recorded(), id3::Timestamp::parse("0").unwrap());
-            year = safe_expand_tag!(some_date.year,0) as usize;
+            let some_date = safe_expand!(tag.date_recorded(), id3::Timestamp::parse("0").unwrap());
+            year = safe_expand!(some_date.year,0) as usize;
         }
 
-        let album = safe_expand_tag!(tag.album(), "");
-        let genre = safe_expand_tag!(self.metadata.genre(), "");
-        let artist = safe_expand_tag!(tag.artist(), "");
-        let title = safe_expand_tag!(tag.title(), "");
+        let album = safe_expand!(tag.album(), "");
+        let genre = safe_expand!(self.metadata.genre(), "");
+        let artist = safe_expand!(tag.artist(), "");
+        let title = safe_expand!(tag.title(), "");
 
         return !artist.is_empty()
             && !title.is_empty()
@@ -125,7 +116,7 @@ impl SongFile{
     }
 
     pub fn has_genre(&self) -> bool{
-        let genre = safe_expand_tag!(self.metadata.genre(), "");
+        let genre = safe_expand!(self.metadata.genre(), "");
         return !genre.is_empty() && !(genre.contains("(") || genre.contains(")"));
     }
 
@@ -151,11 +142,11 @@ impl fmt::Display for SongFile {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let tag = &self.metadata;
         write!(f, "\nTitle: {}\nArtist: {}\nAlbum: {}\nGenre: {}\nYear: {}\nPath:{}", 
-            safe_expand_tag!(tag.title(), "N/A"), 
-            safe_expand_tag!(tag.artist(), "N/A"), 
-            safe_expand_tag!(tag.album(), "N/A"),
-            safe_expand_tag!(tag.genre(), "N/A"),
-            safe_expand_tag!(tag.year(), 0), 
+            safe_expand!(tag.title(), "N/A"), 
+            safe_expand!(tag.artist(), "N/A"), 
+            safe_expand!(tag.album(), "N/A"),
+            safe_expand!(tag.genre(), "N/A"),
+            safe_expand!(tag.year(), 0), 
             self.file_path.display())
     }
 }
