@@ -2,11 +2,19 @@
         "version": "0.2.0",
         "configurations": [
             {
-                "name": "(Windows) Launch",
+                "name": "GDB Debug",
+                "type": "gdb",
+                "request": "launch",
+                "target": "${workspaceRoot}/target/debug/mop.exe",
+                "arguments": "-i ${workspaceRoot}\\data\\special clean",
+                "cwd": "${workspaceRoot}"
+            },
+            {
+                "name": "C++ Debug",
                 "type": "cppvsdbg",
                 "request": "launch",
                 "program": "${workspaceRoot}/target/debug/mop.exe",
-                "args": ["-i", "${workspaceRoot}\\data\\clean","clean"],
+                "args": ["-i", "${workspaceRoot}\\data\\special","clean"],
                 "stopAtEntry": false,
                 "cwd": "${workspaceRoot}",
                 "environment": [{

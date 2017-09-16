@@ -83,6 +83,8 @@ impl SongFile{
 
     pub fn save(&mut self){
         let result = self.metadata.write_to_path(self.file_path.as_path(), self.metadata.version());
+        //FIXME: Sometimes this returns "Permission Denied"
+        //  It's very likely to be an error with the library
         match result {
             Ok(ok) => debug!("Tag saved correctly for {}",self.file_path.to_str().unwrap()),
             Err(e) => {
@@ -104,7 +106,15 @@ impl SongFile{
     pub fn is_metadata_complete(&self) -> bool{
         //The important fields are: Title, Artist, Genre and Year
         let tag = &self.metadata;
-        let year = safe_expand_tag!(tag.year(), 0);
+        let mut year = safe_expand_tag!(tag.year(), -0xDEAD);
+        if year == -0xDEAD{
+            //If it doesn't have this tag, panic
+            year = match tag.date_recorded(){
+                Some(time) => time.year,
+                _ => -0xDEAD,
+            };
+        }
+
         let album = safe_expand_tag!(tag.album(), "");
         // let genre = safe_expand_tag!(self.metadata.genre(), "");
         let artist = safe_expand_tag!(tag.artist(), "");

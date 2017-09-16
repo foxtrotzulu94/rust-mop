@@ -94,8 +94,9 @@ pub fn quick_check(curr_dir: String){
 }
 
 pub fn fix_metadata(working_dir: String){
-    let cleaned_path = fs::canonicalize(working_dir.as_str()).unwrap();
-    let working_path = cleaned_path.as_path();
+    // let cleaned_path = fs::canonicalize(working_dir.as_str()).unwrap();
+    // let working_path = cleaned_path.as_path();
+    let working_path = Path::new(&working_dir);
 
     //Build the list of songs
     let mut song_list : Vec<SongFile> = Vec::new();

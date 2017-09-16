@@ -56,7 +56,10 @@ pub fn retrieve_metadata_online(song_file: &mut SongFile) -> io::Result<()>{
         return Err(Error::new(ErrorKind::InvalidInput, "MOP_Online: SongFile does not have appropriate search key filled"))
     }
 
-    let online_sources = [src_music_brainz::check, src_allmusic::check].to_vec();
+    //[src_music_brainz::check, src_allmusic::check].to_vec();
+    let mut online_sources : Vec<fn(&mut SongFile) -> io::Result<()>>	 = Vec::new();
+    online_sources.push(src_music_brainz::check);
+    online_sources.push(src_allmusic::check);
 
     for check in online_sources{
         let result = check(song_file);
