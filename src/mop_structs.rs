@@ -146,7 +146,7 @@ impl fmt::Display for SongFile {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let tag = &self.metadata;
         write!(f, "Path:{}\nTitle: {}\nArtist: {}\nAlbum: {}\nGenre: {}\nYear: {}", 
-            self.file_path.display()
+            self.file_path.display(),
             safe_expand!(tag.title(), "N/A"), 
             safe_expand!(tag.artist(), "N/A"), 
             safe_expand!(tag.album(), "N/A"),
