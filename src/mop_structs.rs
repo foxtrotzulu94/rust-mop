@@ -82,8 +82,16 @@ impl SongFile{
     }
 
     pub fn save(&mut self){
-        let result = self.metadata.write_to_path(self.file_path.as_path());
-        assert!(result.is_ok());
+        let result = self.metadata.write_to_path(self.file_path.as_path(), self.metadata.version());
+        match result {
+            Ok(ok) => debug!("Tag saved correctly for {}",self.file_path.to_str().unwrap()),
+            Err(e) => {
+                error!("FATAL: {}",e);
+                error!("{}",self);
+                panic!("HALT");
+            },
+        }
+        // assert!(result.is_ok());
     }
 
     pub fn has_search_key(&self) -> bool{
@@ -98,7 +106,7 @@ impl SongFile{
         let tag = &self.metadata;
         let year = safe_expand_tag!(tag.year(), 0);
         let album = safe_expand_tag!(tag.album(), "");
-        let genre = safe_expand_tag!(self.metadata.genre(), "");
+        // let genre = safe_expand_tag!(self.metadata.genre(), "");
         let artist = safe_expand_tag!(tag.artist(), "");
         let title = safe_expand_tag!(tag.title(), "");
 
@@ -120,7 +128,7 @@ impl SongFile{
     pub fn set_basic_metadata(&mut self, ext_data : BasicMetadata){
         let mut metadata = &mut self.metadata;
         metadata.set_album(ext_data.album);
-        metadata.set_year(ext_data.date as usize);
+        metadata.set_year(ext_data.date);
         metadata.set_genre(ext_data.genre);
         metadata.set_track(ext_data.track_number);
 
@@ -128,9 +136,8 @@ impl SongFile{
         let album_artist = String::from(metadata.artist().unwrap());
         metadata.set_album_artist(album_artist);
         
-        //Can't do this yet due to: https://github.com/jameshurst/rust-id3/issues/17
-        // let comment_frame = id3::Frame::with_content("COM", Content::Text(get_user_agent()));
-        // metadata.push(comment_frame);
+        let comment_frame = id3::Frame::with_content("COM", Content::Text(get_user_agent()));
+        metadata.push(comment_frame);
     }
 }
 
@@ -138,13 +145,14 @@ impl fmt::Display for SongFile {
     // This trait requires `fmt` with this exact signature.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let tag = &self.metadata;
-        write!(f, "\nTitle: {}\nArtist: {}\nAlbum: {}\nGenre: {}\nYear: {}\nPath:{}", 
+        write!(f, "{}\nTitle: {}\nArtist: {}\nAlbum: {}\nGenre: {}\nYear: {}", 
+            self.file_path.display(),
             safe_expand_tag!(tag.title(), "N/A"), 
             safe_expand_tag!(tag.artist(), "N/A"), 
             safe_expand_tag!(tag.album(), "N/A"),
             safe_expand_tag!(tag.genre(), "N/A"),
             safe_expand_tag!(tag.year(), 0), 
-            self.file_path.display())
+            )
     }
 }
 

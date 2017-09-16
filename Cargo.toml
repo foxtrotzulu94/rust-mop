@@ -11,7 +11,7 @@ chrono = "0.4"
 clap = "2"
 json = "*"
 xml-rs = "0.6"
-id3 = "0.1.12"
+id3 = { git = "https://github.com/jameshurst/rust-id3" }
 curl = "*"
 select = "0.4.2"
 url = "*"
