@@ -94,9 +94,9 @@ pub fn quick_check(curr_dir: String){
 }
 
 pub fn fix_metadata(working_dir: String){
-    // let cleaned_path = fs::canonicalize(working_dir.as_str()).unwrap();
-    // let working_path = cleaned_path.as_path();
-    let working_path = Path::new(&working_dir);
+    let cleaned_path = fs::canonicalize(working_dir.as_str()).unwrap();
+    let working_path = cleaned_path.as_path();
+    // let working_path = Path::new(&working_dir);
 
     //Build the list of songs
     let mut song_list : Vec<SongFile> = Vec::new();
@@ -133,7 +133,6 @@ pub fn fix_metadata(working_dir: String){
                     //Do we STILL have incomplete metadata?
                     if !a_song.is_metadata_complete(){
                         error!("{} : {}", e, a_song.get_filepath_str().unwrap());
-                        // error!("{}",a_song);
                         unchanged_files.push(a_song);
                     }
                 },

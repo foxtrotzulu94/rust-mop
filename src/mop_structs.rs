@@ -143,10 +143,6 @@ impl SongFile{
         //Loose strings here
         let album_artist = String::from(metadata.artist().unwrap());
         metadata.set_album_artist(album_artist);
-        
-        //Can't do this yet due to: https://github.com/jameshurst/rust-id3/issues/17
-        // let comment_frame = id3::Frame::with_content("COM", Content::Text(get_user_agent()));
-        // metadata.push(comment_frame);
     }
 }
 

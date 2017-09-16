@@ -14,7 +14,8 @@ pub fn get_user_agent() -> String{
 }
 
 pub fn percent_encode(some_url : &str) -> io::Result<String>{
-     let retval = utf8_percent_encode(some_url, DEFAULT_ENCODE_SET).collect();
+     let mut retval : String = utf8_percent_encode(some_url, DEFAULT_ENCODE_SET).collect();
+     retval = retval.replace("&","%26").replace("/","%2F").replace(":","%3A");
      Ok(retval)
 }
 

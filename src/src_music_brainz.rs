@@ -63,7 +63,7 @@ fn find_recording_data(raw_data: &str) -> io::Result<BasicMetadata>{
     let possible_recordings = &recording_list.get_matching_children("recording");
     let mut best_candidate = BasicMetadata::new();
     best_candidate.date = 9001;
-    let min_confidence = 90;
+    let min_confidence = 75;
     let mut tag_count = 0;
     for a_recording in *possible_recordings{
         let confidence = a_recording.attributes["score"].parse::<i32>().unwrap();
@@ -128,7 +128,7 @@ fn determine_artist_id(song_file: &SongFile) -> io::Result<String>{
     let mut artist_request = String::new();
     artist_request.push_str("artist?query=");
     let mut sanitized_artist_name = percent_encode(
-        song_file.metadata.artist().unwrap().replace("/"," ").as_str()
+        song_file.metadata.artist().unwrap()
         ).unwrap();
     artist_request.push_str(&sanitized_artist_name);
     debug!("Request-url:{}",artist_request.as_str());
@@ -144,7 +144,7 @@ fn check_artist_recording(song_file: &SongFile, artist_id: String) -> io::Result
     let mut song_request = String::new();
     song_request.push_str("recording/?query=");
     song_request.push_str(percent_encode(song_file.metadata.title().unwrap()).unwrap().as_str());
-    song_request.push_str(percent_encode(" AND arid%3A").unwrap().as_str()); //"%20AND%20arid%3A"
+    song_request.push_str(percent_encode(" AND arid:").unwrap().as_str()); //"%20AND%20arid%3A"
     song_request.push_str(artist_id.as_str());
     debug!("Request-url:{}",song_request.as_str());
     let request_result = make_get_request(&API_ENDPOINT, &song_request)?;
