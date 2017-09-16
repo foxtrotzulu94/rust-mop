@@ -76,28 +76,38 @@ fn build_metadata(artist: &str, title: &str, album_url : &str)-> io::Result<Basi
     let album_title = doc.find(Class("album-title")).next().unwrap().text();
     ret_val.album = String::from(album_title.trim());
 
-    let track_node = doc.find(Class("track-listing")).next().unwrap();
-    let track_list = track_node.find(Class("track"));
-    for a_track in track_list{
-        let track_title = a_track.find(Class("title")).next().unwrap().find(Name("a")).next().unwrap().text();
-        if track_title.to_lowercase().trim() == title{
-            //Track Number
-            let track_num = a_track.find(Class("tracknum")).next().unwrap().text();
-            ret_val.track_number = track_num.trim().parse::<u32>().unwrap();
+    //Sometimes, there aren't any tracks
 
-            //Composer
-            let composer_block = a_track.find(Class("composer")).next().unwrap().text();
-            ret_val.composer = String::from(composer_block.trim());
-            break;
+    let track_node_option = doc.find(Class("track-listing")).next();
+    if track_node_option.is_some(){
+        let track_list = track_node_option.unwrap().find(Class("track"));
+        for a_track in track_list{
+            let track_title = a_track.find(Class("title")).next().unwrap().find(Name("a")).next().unwrap().text();
+            if track_title.to_lowercase().trim() == title{
+                //Track Number
+                let track_num = a_track.find(Class("tracknum")).next().unwrap().text();
+                ret_val.track_number = track_num.trim().parse::<u32>().unwrap();
+
+                //Composer
+                let composer_block = a_track.find(Class("composer")).next().unwrap().text();
+                ret_val.composer = String::from(composer_block.trim());
+                break;
+            }
         }
+    } else{
+        ret_val.track_number = 1;
+        //Composer is not set in this case
     }
 
     //Genre/Style
     let basic_info = doc.find(Class("basic-info")).next().unwrap();
-    let style = basic_info.find(Class("styles")).next().unwrap()
-                    .find(Name("div")).next().unwrap()
-                    .find(Name("a")).next().unwrap().text();
-    ret_val.genre = String::from(style.trim());
+    let style_block = basic_info.find(Class("styles")).next();
+    if style_block.is_some(){
+        let style = style_block.unwrap()
+                        .find(Name("div")).next().unwrap()
+                        .find(Name("a")).next().unwrap().text();
+        ret_val.genre = String::from(style.trim());
+    }
 
     Ok(ret_val)
 }

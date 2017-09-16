@@ -109,6 +109,8 @@ impl SongFile{
         let artist = safe_expand!(tag.artist(), "");
         let title = safe_expand!(tag.title(), "");
 
+        return false;
+
         return !artist.is_empty()
             && !title.is_empty()
             && !album.is_empty()
@@ -143,13 +145,14 @@ impl fmt::Display for SongFile {
     // This trait requires `fmt` with this exact signature.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let tag = &self.metadata;
-        write!(f, "\nTitle: {}\nArtist: {}\nAlbum: {}\nGenre: {}\nYear: {}\nPath:{}", 
+        write!(f, "Path:{}\nTitle: {}\nArtist: {}\nAlbum: {}\nGenre: {}\nYear: {}", 
+            self.file_path.display()
             safe_expand!(tag.title(), "N/A"), 
             safe_expand!(tag.artist(), "N/A"), 
             safe_expand!(tag.album(), "N/A"),
             safe_expand!(tag.genre(), "N/A"),
             safe_expand!(tag.year(), 0), 
-            self.file_path.display())
+            )
     }
 }
 
