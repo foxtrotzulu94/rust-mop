@@ -131,6 +131,8 @@ impl SongFile{
         metadata.set_genre(ext_data.genre);
         metadata.set_track(ext_data.track_number);
 
+        //TODO: Add composer block
+
         //Loose strings here
         let album_artist = String::from(metadata.artist().unwrap());
         metadata.set_album_artist(album_artist);

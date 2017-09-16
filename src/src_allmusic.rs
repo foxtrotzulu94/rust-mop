@@ -23,8 +23,13 @@ fn find_matching_song_url(artist: &str, title: &str) -> io::Result<String>{
         //Safety check
         let title_node = node.find(Class("title")).next().unwrap();
         let curr_title = title_node.text().replace("\"","");
-        let curr_artist = node.find(Class("performers")).next().unwrap().text().replace("by ","");
-        if curr_title.trim() == title && curr_artist.trim() == artist{
+        let test_node = node.find(Class("performers")).next();
+        match test_node{
+            None => continue,
+            _ => ()
+        }
+        let curr_artist = test_node.unwrap().text().replace("by ","");
+        if curr_title.to_lowercase().trim() == title && curr_artist.to_lowercase().trim() == artist{
             let song_url = title_node.find(Name("a")).next().unwrap().attr("href").unwrap();
             debug!("Entry: {} - {}", curr_title.trim(), curr_artist.trim());
             debug!("{}",song_url);
@@ -37,28 +42,89 @@ fn find_matching_song_url(artist: &str, title: &str) -> io::Result<String>{
 
 /// Takes the oldest album and returns the url to it
 fn find_artist_album(song_url : &str)-> io::Result<String>{
-    Err(Error::new(ErrorKind::Other, "AllMusic: This isn't implemented."))
+    let html_data = make_get_request(API_ENDPOINT, song_url)?;
+
+    //Now parse the HTML.
+    let doc = Document::from(html_data.as_str());
+    let results = doc.find(Attr("itemprop","inAlbum"));
+    for node in results{
+        //Safety check
+        let album_node = node.find(Class("artist-album")).next().unwrap();
+        let album_url = album_node.find(Class("title")).next().unwrap()
+                            .find(Name("a")).next().unwrap()
+                            .attr("href").unwrap();
+        debug!("Album {}",album_url);
+        return Ok(String::from(album_url));
+    }
+
+    Err(Error::new(ErrorKind::Other, "AllMusic: No Albums found for song"))
 }
 
-fn build_metadata(album_url : &str)-> io::Result<BasicMetadata>{
-    Err(Error::new(ErrorKind::Other, "AllMusic: This isn't implemented."))
+fn build_metadata(artist: &str, title: &str, album_url : &str)-> io::Result<BasicMetadata>{
+    let html_data = make_get_request(API_ENDPOINT, album_url)?;
+
+    //Now parse the HTML.
+    let doc = Document::from(html_data.as_str());
+    let mut ret_val = BasicMetadata::new();
+
+    //Get the release date
+    let release_date_block = doc.find(Class("release-date")).next().unwrap().find(Name("span")).next().unwrap();
+    let date_text = release_date_block.text();
+    ret_val.date = date_text.trim()[date_text.len()-4..].parse::<i32>().unwrap();
+    
+    //Album title
+    let album_title = doc.find(Class("album-title")).next().unwrap().text();
+    ret_val.album = String::from(album_title.trim());
+
+    let track_node = doc.find(Class("track-listing")).next().unwrap();
+    let track_list = track_node.find(Class("track"));
+    for a_track in track_list{
+        let track_title = a_track.find(Class("title")).next().unwrap().find(Name("a")).next().unwrap().text();
+        if track_title.to_lowercase().trim() == title{
+            //Track Number
+            let track_num = a_track.find(Class("tracknum")).next().unwrap().text();
+            ret_val.track_number = track_num.trim().parse::<u32>().unwrap();
+
+            //Composer
+            let composer_block = a_track.find(Class("composer")).next().unwrap().text();
+            ret_val.composer = String::from(composer_block.trim());
+            break;
+        }
+    }
+
+    //Genre/Style
+    let basic_info = doc.find(Class("basic-info")).next().unwrap();
+    let style = basic_info.find(Class("styles")).next().unwrap()
+                    .find(Name("div")).next().unwrap()
+                    .find(Name("a")).next().unwrap().text();
+    ret_val.genre = String::from(style.trim());
+
+    Ok(ret_val)
 }
 
 pub fn check(song_file: &mut SongFile) -> io::Result<()>{
+    info!("AllMusic: Checking '{} - {}'", song_file.metadata.artist().unwrap(), song_file.metadata.title().unwrap());
     // When we query AllMusic, it's mostly scraping from their site
     //  We try searching song -> song by artist -> album by artist
-    let mut album_url = String::new();
-    {
-        let artist = safe_expand!(song_file.metadata.artist(),"");
-        let title = safe_expand!(song_file.metadata.title(),"");
 
-        let song_url = find_matching_song_url(artist,title)?;
-        album_url = find_artist_album(song_url.as_str())?;
-    }
-    let recording_metadata = build_metadata(album_url.as_str())?;
+    let clean_artist = String::from(song_file.metadata.artist().unwrap()).to_lowercase();
+    let clean_title = String::from(song_file.metadata.title().unwrap()).to_lowercase();
+
+    let song_url = find_matching_song_url(
+        clean_artist.as_str(),
+        clean_title.as_str(),
+    )?;
+    info!("Checking Song URL");
+    let album_url = find_artist_album(song_url.as_str())?;
+
+    let recording_metadata = build_metadata(
+        clean_artist.as_str(),
+        clean_title.as_str(),
+        album_url.as_str()
+    )?;
 
     song_file.set_basic_metadata(recording_metadata);
-    // song_file.save();
+    song_file.save();
 
-    Err(Error::new(ErrorKind::Other, "AllMusic: This isn't implemented."))
+    Ok(())
 }

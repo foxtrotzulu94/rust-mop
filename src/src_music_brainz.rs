@@ -47,8 +47,6 @@ fn find_artist_id(raw_data: &str) -> io::Result<String>{
 }
 
 fn find_recording_data(raw_data: &str) -> io::Result<BasicMetadata>{
-    //TODO: get the request and return a well formed metadata struct instance
-
     let mut temp_metadata = BasicMetadata::new();
     let mut recording_list : Vec<BasicMetadata> = Vec::new();
     
