@@ -111,6 +111,7 @@ fn main(){
     init_logging(args.value_of("log").unwrap_or("warn"));
     info!("Starting up MOP");
     let working_directory = String::from(args.value_of("directory").unwrap());
+    info!("Working Directory: {}",working_directory);
 
     //TODO: Complete this match!
     match args.subcommand_name() {

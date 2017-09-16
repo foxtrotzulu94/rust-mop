@@ -1,0 +1,19 @@
+{
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "name": "(Windows) Launch",
+                "type": "cppvsdbg",
+                "request": "launch",
+                "program": "${workspaceRoot}/target/debug/mop.exe",
+                "args": ["-i", "${workspaceRoot}\\data\\clean","clean"],
+                "stopAtEntry": false,
+                "cwd": "${workspaceRoot}",
+                "environment": [{
+                    "name":"RUST_BACKTRACE",
+                    "value":"1"
+                }],
+                "externalConsole": true
+            }
+        ]
+    }
