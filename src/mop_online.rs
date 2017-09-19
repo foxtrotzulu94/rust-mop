@@ -4,6 +4,7 @@ use src_music_brainz;
 use src_allmusic;
 
 use std::io::{Error, ErrorKind, self};
+use std::error::Error as GenErr;
 use std::str;
 use curl::easy::Easy;
 use url::percent_encoding::{utf8_percent_encode, DEFAULT_ENCODE_SET};
@@ -61,10 +62,15 @@ pub fn retrieve_metadata_online(song_file: &mut SongFile) -> io::Result<()>{
     online_sources.push(src_allmusic::check);
     online_sources.push(src_music_brainz::check);
 
+    let mut error_messages = String::new();
     for check in online_sources{
         let result = check(song_file);
         match result {
-            Err(expr) => warn!("{}", expr),
+            Err(expr) => {
+                warn!("{}", expr);
+                error_messages.push_str(expr.description());
+                error_messages.push_str("\n");
+            },
             Ok(_) => {
                 return Ok(());
             },
@@ -72,5 +78,5 @@ pub fn retrieve_metadata_online(song_file: &mut SongFile) -> io::Result<()>{
     }
 
     //If you get to this point, return an error
-    Err(Error::new(ErrorKind::NotFound, "MOP_Online: SongFile was unchanged"))
+    Err(Error::new(ErrorKind::NotFound, error_messages))
 }

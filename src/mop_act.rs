@@ -5,6 +5,7 @@ use mop_structs::SongFile;
 
 use std::io;
 use std::fs;
+use std::error::Error;
 use std::path::Path;
 use std::string::String;
 use std::collections::HashMap;
@@ -30,6 +31,7 @@ fn is_audio_extension(ext: &str) -> bool{
     return ret_val;
 }
 
+///Visits a path recursively and calls `func` on each of the files
 fn visit_path(path: &Path, func: &mut FnMut(&Path)) -> io::Result<()> {
     if path.is_dir() {
         for entry in fs::read_dir(path)? {
@@ -46,6 +48,7 @@ fn visit_path(path: &Path, func: &mut FnMut(&Path)) -> io::Result<()> {
     Ok(())
 }
 
+///Perform a quick check of the path and the audio files contained.
 pub fn path_check(curr_dir: String){
     info!("Doing a quick check of {}",curr_dir);
 
@@ -105,6 +108,7 @@ pub fn path_check(curr_dir: String){
         file_count.invalid_key_count, file_count.incomplete_metadata_count);
 }
 
+///Write online metadata for incomplete files in `working_dir`
 pub fn fix_metadata(working_dir: String){
     let cleaned_path = fs::canonicalize(working_dir.as_str()).unwrap();
     let working_path = cleaned_path.as_path();
@@ -136,8 +140,7 @@ pub fn fix_metadata(working_dir: String){
     }
 
     //Testing that this works
-    //TODO: add the reason for rejection
-    let mut unchanged_files : Vec<SongFile> = Vec::new();
+    let mut unchanged_files : Vec<(SongFile,String)> = Vec::new();
     for mut a_song in song_list{
         if !a_song.is_metadata_complete(){
             match retrieve_metadata_online(&mut a_song){
@@ -145,7 +148,7 @@ pub fn fix_metadata(working_dir: String){
                     //Do we STILL have incomplete metadata?
                     if !a_song.is_metadata_complete(){
                         error!("{} : {}", e, a_song.get_filepath_str().unwrap());
-                        unchanged_files.push(a_song);
+                        unchanged_files.push((a_song, String::from(e.description())));
                     }
                 },
                 _ => info!("SUCCESS"),
@@ -154,15 +157,25 @@ pub fn fix_metadata(working_dir: String){
         } else {
             info!("Skipping '{} - {}' as complete", a_song.metadata.artist().unwrap(), a_song.metadata.title().unwrap());
         }
-    }    
+    }
+
+    //Status report
+    let num_unchanged_files = unchanged_files.len();
+    println!("\nAutomated fix completed - Pay attention below for unchanged/problematic files\n");
+    for (failed_file, reason) in unchanged_files{
+        println!("File '{}'", failed_file.get_filepath_str().unwrap());
+        println!("Reason: {}", reason);
+    }
+
+    println!("{} files unchanged after fix", num_unchanged_files);
 }
 
 pub fn get_cover_art(working_dir: String){
-    panic!("Cover art retrieval is not yet implemented!");
+    error!("Cover art retrieval is not yet implemented!");
 }
 
 pub fn bulk_rename(working_dir: String){
-    panic!("Bulk renaming is not permitted yet");
+    error!("Bulk renaming is not permitted yet");
 }
 
 pub fn do_all(working_dir: String){
