@@ -135,7 +135,10 @@ fn main(){
         Some("check")   => mop_act::path_check(working_directory),
         Some("fix")     => mop_act::fix_metadata(working_directory),
         Some("art")     => mop_act::get_cover_art(working_directory),
-        Some("rename")  => mop_act::bulk_rename(working_directory),
+        Some("rename")  => {
+            let format_string = String::from(args.value_of("format").unwrap_or("./%artist - %title"));
+            mop_act::bulk_rename(working_directory, format_string);
+        },
         Some("dev")     => test_wrap(),
         None        => panic!("No subcommand was used - Not supported yet!"),
         _           => panic!("The subcommand that was used that is not supported yet"),

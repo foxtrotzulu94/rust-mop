@@ -52,6 +52,7 @@ impl fmt::Display for BasicMetadata {
 
 pub struct SongFile{
     pub metadata: Tag,
+    pub extension: String,
     file_path: PathBuf,
 }
 
@@ -60,7 +61,8 @@ impl SongFile{
         //Build metadata first
         let tag = Tag::read_from_path(file_path).unwrap();
         let song = SongFile{
-            metadata: tag, 
+            metadata: tag,
+            extension: file_path.extension().unwrap().to_str().unwrap().to_string().to_lowercase(), 
             file_path: PathBuf::from(file_path),
             };
         
@@ -119,6 +121,10 @@ impl SongFile{
         return self.file_path.to_str();
     }
 
+    pub fn get_filepath(&self) -> &Path{
+        return self.file_path.as_path();
+    }
+
     pub fn set_basic_metadata(&mut self, ext_data : BasicMetadata){
         let metadata = &mut self.metadata;
         metadata.set_album(ext_data.album);
@@ -131,6 +137,12 @@ impl SongFile{
         //Missing stuff here
         let album_artist = String::from(metadata.artist().unwrap());
         metadata.set_album_artist(album_artist);
+    }
+}
+
+impl Clone for SongFile {
+    fn clone(&self) -> SongFile{
+        return SongFile::make(self.file_path.as_path());
     }
 }
 
