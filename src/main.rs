@@ -89,23 +89,32 @@ fn main(){
                         .author(env!("CARGO_PKG_AUTHORS"))
                         .about("Cleans up messy music files!")
                         .subcommand(SubCommand::with_name("all")
-                                    .about("Perform all operations available (excluding 'help' subcommand)"))                       
+                                    .about("Perform all operations available (check->fix->art->rename)"))                       
                         .subcommand(SubCommand::with_name("check")
                                     .about("Verify the given directory and print info about it"))
-                        .subcommand(SubCommand::with_name("clean")
-                                    .aliases(&["fix"])
-                                    .about("Do a full fix of all file metadata (except for genre)"))
-                        .subcommand(SubCommand::with_name("genre")
-                                    .aliases(&["fix-genre"])
-                                    .about("Appropriately assign Genre data."))
-                        .subcommand(SubCommand::with_name("cover-art")
+                        .subcommand(SubCommand::with_name("fix")
+                                    .about("Do a full fix of all file metadata")
+                                    .arg(Arg::with_name("genre")
+                                        .short("g")
+                                        .long("genre")
+                                        .value_name("GENRE")
+                                        .help("Fix Genre Metadata as well")
+                                        .required(false)
+                                        .takes_value(false)))
+                        .subcommand(SubCommand::with_name("art")
                                     .about("Retrieve the cover art for all file, if possible"))
                         .subcommand(SubCommand::with_name("rename")
-                                    .about("Rename the file in some specific manner"))
+                                    .about("Rename files to a specifc format")
+                                    .arg(Arg::with_name("format")
+                                        .short("f")
+                                        .long("format")
+                                        .help("Use a specific renaming format (by default './%artist - %title') ")
+                                        .required(false)
+                                        .takes_value(true)))
                         .subcommand(SubCommand::with_name("dev")
                                     .about("DevCommand :)"))
                         .arg(Arg::with_name("directory")
-                            .short("i")
+                            .short("d")
                             .long("working-dir")
                             .value_name("PATH")
                             .help("Set the working directory of the program")
@@ -126,9 +135,12 @@ fn main(){
 
     //TODO: Complete this match!
     match args.subcommand_name() {
-        Some("check") => mop_act::quick_check(working_directory),
-        Some("clean") => mop_act::fix_metadata(working_directory),
-        Some("dev") => test_wrap(),
+        Some("all")     => mop_act::do_all(working_directory),
+        Some("check")   => mop_act::quick_check(working_directory),
+        Some("fix")     => mop_act::fix_metadata(working_directory),
+        Some("art")     => mop_act::get_cover_art(working_directory),
+        Some("rename")  => mop_act::bulk_rename(working_directory),
+        Some("dev")     => test_wrap(),
         None        => panic!("No subcommand was used - Not supported yet!"),
         _           => panic!("The subcommand that was used that is not supported yet"),
     }

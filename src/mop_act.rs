@@ -144,3 +144,19 @@ pub fn fix_metadata(working_dir: String){
         }
     }    
 }
+
+pub fn get_cover_art(working_dir: String){
+    panic!("Cover art retrieval is not yet implemented!");
+}
+
+pub fn bulk_rename(working_dir: String){
+    panic!("Bulk renaming is not permitted yet");
+}
+
+pub fn do_all(working_dir: String){
+    //Do them all
+    quick_check(working_dir.clone());
+    fix_metadata(working_dir.clone());
+    get_cover_art(working_dir.clone());
+    bulk_rename(working_dir);
+}
