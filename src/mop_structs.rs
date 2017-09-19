@@ -109,8 +109,6 @@ impl SongFile{
         let artist = safe_expand!(tag.artist(), "");
         let title = safe_expand!(tag.title(), "");
 
-        return false;
-
         return !artist.is_empty()
             && !title.is_empty()
             && !album.is_empty()

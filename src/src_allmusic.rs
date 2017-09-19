@@ -68,10 +68,12 @@ fn build_metadata(artist: &str, title: &str, album_url : &str)-> io::Result<Basi
     let mut ret_val = BasicMetadata::new();
 
     //Get the release date
-    let release_date_block = doc.find(Class("release-date")).next().unwrap().find(Name("span")).next().unwrap();
-    let date_text = release_date_block.text();
-    ret_val.date = date_text.trim()[date_text.len()-4..].parse::<i32>().unwrap();
-    
+    let release_date_option = doc.find(Class("release-date")).next();
+    if release_date_option.is_some(){
+        let release_date_block = release_date_option.unwrap().find(Name("span")).next().unwrap();
+        let date_text = release_date_block.text();
+        ret_val.date = date_text.trim()[date_text.len()-4..].parse::<i32>().unwrap();
+    }
     //Album title
     let album_title = doc.find(Class("album-title")).next().unwrap().text();
     ret_val.album = String::from(album_title.trim());

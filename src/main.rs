@@ -57,12 +57,7 @@ fn init_logging(log_level: &str){
     let mut builder = LogBuilder::new();
     builder.format(format).filter(None, LogLevelFilter::Info);
     
-    //If building in debug, force info (debug is too verbose)
-    if cfg!(debug_assertions) {
-        builder.parse("info");
-    } else {
-        builder.parse(log_level);
-    }
+    builder.parse(log_level);
     builder.init().unwrap();
 }
 
