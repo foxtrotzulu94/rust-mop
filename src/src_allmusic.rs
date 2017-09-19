@@ -6,7 +6,7 @@ use std::io::{Error, ErrorKind, self};
 use std::str;
 
 use select::document::Document;
-use select::predicate::{Predicate, Attr, Class, Name};
+use select::predicate::{Attr, Class, Name};
 
 static API_ENDPOINT: &'static str = "http://www.allmusic.com/";
 

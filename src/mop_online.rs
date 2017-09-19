@@ -6,8 +6,7 @@ use src_allmusic;
 use std::io::{Error, ErrorKind, self};
 use std::str;
 use curl::easy::Easy;
-use xml::reader::{EventReader, XmlEvent};
-use url::percent_encoding::{utf8_percent_encode, QUERY_ENCODE_SET, DEFAULT_ENCODE_SET};
+use url::percent_encoding::{utf8_percent_encode, DEFAULT_ENCODE_SET};
 
 pub fn get_user_agent() -> String{
     return format!("MetadataOrganizationProgram/{} ({})", env!("CARGO_PKG_VERSION"), env!("CARGO_PKG_AUTHORS"));
@@ -66,7 +65,7 @@ pub fn retrieve_metadata_online(song_file: &mut SongFile) -> io::Result<()>{
         let result = check(song_file);
         match result {
             Err(expr) => warn!("{}", expr),
-            Ok(e) => {
+            Ok(_) => {
                 return Ok(());
             },
         }

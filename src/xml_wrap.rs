@@ -2,7 +2,7 @@
 //WARNING: It loads your entire XML file into memory
 
 use std::ops::Index;
-use std::borrow::Borrow;
+// use std::borrow::Borrow;
 use std::string::String;
 use std::collections::HashMap;
 use xml::reader::{EventReader, XmlEvent};
@@ -29,29 +29,14 @@ impl XmlNode{
         return Box::new(XmlNode::new());
     }
 
-    pub fn add_new_child(&mut self, key: String, val: String) -> &XmlNode{
-        // unsafe{
-        let mut new_node = Box::new(
-            XmlNode { 
-                /*parent: Some(Box::from_raw(self)),*/ 
-                value: val, 
-                attributes: HashMap::new(),
-                children: HashMap::new()
-            });
-        let mut list = self.children.entry(key).or_insert(Vec::new());
-        list.push(new_node);
-        return list.last().unwrap();
-        // }
-    }
-
     pub fn add_attribute(&mut self, key: String, val: String){
         self.attributes.insert(key,val);
     }
 
-    pub fn add_child(&mut self, key: String, mut node: Box<XmlNode>) -> &XmlNode{
+    pub fn add_child(&mut self, key: String, node: Box<XmlNode>) -> &XmlNode{
         // unsafe{
             // node.parent = Some(Box::from_raw(self));
-        let mut list = self.children.entry(key).or_insert(Vec::new());
+        let list = self.children.entry(key).or_insert(Vec::new());
         list.push(node);
         return list.last().unwrap();
         // }
@@ -70,7 +55,7 @@ impl XmlNode{
     pub fn has_matching_child(&self, key: &str) -> bool{
         let check = self.children.get(&String::from(key));
         match check{
-            Some(valid) => return true,
+            Some(_) => return true,
             None => return false,
         }
     }
@@ -105,7 +90,7 @@ impl<'a> Index<&'a str> for XmlNode {
 pub struct XmlMap{
     pub root: Box<XmlNode>,
     //Debug only
-    raw_data: String,
+    // raw_data: String,
 }
 
 impl XmlMap{
@@ -150,7 +135,7 @@ impl XmlMap{
     pub fn from_str(raw_data : &str) -> XmlMap{
         let mut streaming_parser = EventReader::from_str(raw_data);
         let root = XmlMap::create(&mut streaming_parser);
-        let dstruct = XmlMap{ root: root, raw_data: String::from(raw_data)};
+        let dstruct = XmlMap{ root: root /*, raw_data: String::from(raw_data)*/};
         return dstruct;
     }
 }

@@ -46,10 +46,7 @@ fn find_artist_id(raw_data: &str) -> io::Result<String>{
     Ok(artist_id)
 }
 
-fn find_recording_data(raw_data: &str) -> io::Result<BasicMetadata>{
-    let mut temp_metadata = BasicMetadata::new();
-    let mut recording_list : Vec<BasicMetadata> = Vec::new();
-    
+fn find_recording_data(raw_data: &str) -> io::Result<BasicMetadata>{    
     let data = XmlMap::from_str(raw_data);
     let recording_list = &data.root["metadata"]["recording-list"];
     let num_recordings = recording_list.attributes["count"].parse::<i32>().unwrap();
@@ -125,7 +122,7 @@ fn find_recording_data(raw_data: &str) -> io::Result<BasicMetadata>{
 fn determine_artist_id(song_file: &SongFile) -> io::Result<String>{
     let mut artist_request = String::new();
     artist_request.push_str("artist?query=");
-    let mut sanitized_artist_name = percent_encode(
+    let sanitized_artist_name = percent_encode(
         song_file.metadata.artist().unwrap()
         ).unwrap();
     artist_request.push_str(&sanitized_artist_name);

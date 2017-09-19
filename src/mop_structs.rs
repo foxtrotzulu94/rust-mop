@@ -1,16 +1,13 @@
 //Basic data structures and their method implementations
 
-extern crate id3;
-
-use id3::{Tag, Frame};
-use id3::frame::Content;
+use id3::{Tag, /*Frame,*/ Timestamp};
+// use id3::frame::Content;
 
 use std::fmt;
 use std::string::String;
-use std::time::Duration;
 use std::path::{Path,PathBuf};
 
-use mop_online::get_user_agent;
+// use mop_online::get_user_agent;
 
 pub struct BasicMetadata{
     //The assumption is that the program is using title+artist as a key in all lookups
@@ -54,18 +51,16 @@ impl fmt::Display for BasicMetadata {
 }
 
 pub struct SongFile{
-    pub metadata: id3::Tag,
-    extension: String,
+    pub metadata: Tag,
     file_path: PathBuf,
 }
 
 impl SongFile{
     pub fn make(file_path : &Path) -> SongFile{
         //Build metadata first
-        let tag = id3::Tag::read_from_path(file_path).unwrap();
+        let tag = Tag::read_from_path(file_path).unwrap();
         let song = SongFile{
             metadata: tag, 
-            extension: file_path.extension().unwrap().to_str().unwrap().to_string().to_lowercase(),
             file_path: PathBuf::from(file_path),
             };
         
@@ -77,7 +72,7 @@ impl SongFile{
         //FIXME: Sometimes this returns "Permission Denied"
         //  It's very likely to be an error with the library
         match result {
-            Ok(ok) => debug!("Tag saved correctly for {}",self.file_path.to_str().unwrap()),
+            Ok(_) => debug!("Tag saved correctly for {}",self.file_path.to_str().unwrap()),
             Err(e) => {
                 error!("FATAL: {}",e);
                 error!("{}",self);
@@ -100,12 +95,12 @@ impl SongFile{
         let mut year = safe_expand!(tag.year(), 0);
         if year == 0{
             //If it doesn't have this tag, panic
-            let some_date = safe_expand!(tag.date_recorded(), id3::Timestamp::parse("0").unwrap());
+            let some_date = safe_expand!(tag.date_recorded(), Timestamp::parse("0").unwrap());
             year = safe_expand!(some_date.year,0) as usize;
         }
 
         let album = safe_expand!(tag.album(), "");
-        let genre = safe_expand!(self.metadata.genre(), "");
+        // let genre = safe_expand!(self.metadata.genre(), "");
         let artist = safe_expand!(tag.artist(), "");
         let title = safe_expand!(tag.title(), "");
 
@@ -125,7 +120,7 @@ impl SongFile{
     }
 
     pub fn set_basic_metadata(&mut self, ext_data : BasicMetadata){
-        let mut metadata = &mut self.metadata;
+        let metadata = &mut self.metadata;
         metadata.set_album(ext_data.album);
         metadata.set_year(ext_data.date as usize);
         metadata.set_genre(ext_data.genre);
@@ -133,7 +128,7 @@ impl SongFile{
 
         //TODO: Add composer block
 
-        //Loose strings here
+        //Missing stuff here
         let album_artist = String::from(metadata.artist().unwrap());
         metadata.set_album_artist(album_artist);
     }

@@ -15,7 +15,10 @@ pub mod mop_macro{
     macro_rules! read_result {
         ($x:expr, $y:expr) => {
             match $x{
-                Err(e) => $y,
+                Err(e) => {
+                    error!("{}",e);
+                    $y
+                },
                 Ok(value) => value,
             };
         }
@@ -39,14 +42,12 @@ mod mop_structs;
 mod mop_online;
 mod mop_act;
 
-use std::env;
-
 use log::{LogRecord, LogLevelFilter};
 use env_logger::LogBuilder;
 use chrono::prelude::*;
 use clap::{Arg, App, SubCommand};
 
-use xml_wrap::{XmlMap,XmlNode};
+use xml_wrap::XmlMap;
 
 fn init_logging(log_level: &str){
     let format = |record: &LogRecord| {
@@ -128,10 +129,10 @@ fn main(){
     let working_directory = String::from(args.value_of("directory").unwrap());
     info!("Working Directory: {}",working_directory);
 
-    //TODO: Complete this match!
+    //TODO: Pass the correct args into each function
     match args.subcommand_name() {
         Some("all")     => mop_act::do_all(working_directory),
-        Some("check")   => mop_act::quick_check(working_directory),
+        Some("check")   => mop_act::path_check(working_directory),
         Some("fix")     => mop_act::fix_metadata(working_directory),
         Some("art")     => mop_act::get_cover_art(working_directory),
         Some("rename")  => mop_act::bulk_rename(working_directory),

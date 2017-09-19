@@ -1,12 +1,10 @@
 //Actions of the program as simple, public functions
 
-extern crate id3;
-
 use mop_online::retrieve_metadata_online;
 use mop_structs::SongFile;
 
 use std::io;
-use std::fs::{self, DirEntry};
+use std::fs;
 use std::path::Path;
 use std::string::String;
 use std::collections::HashMap;
@@ -14,6 +12,8 @@ use std::collections::HashMap;
 struct FileCount{
     num: i32,
     bytes: u64,
+    incomplete_metadata_count: i32,
+    invalid_key_count: i32,
 }
 
 ///Checks whether the given extension is acceptable by MOP
@@ -22,7 +22,7 @@ fn is_audio_extension(ext: &str) -> bool{
         "mp3" => true,
         "aac"|"mp4"|"ogg" => {
             warn!("Extension not yet supported: {}",ext);
-            false
+            true
         }
         _ => false,
     };
@@ -46,7 +46,7 @@ fn visit_path(path: &Path, func: &mut FnMut(&Path)) -> io::Result<()> {
     Ok(())
 }
 
-pub fn quick_check(curr_dir: String){
+pub fn path_check(curr_dir: String){
     info!("Doing a quick check of {}",curr_dir);
 
     //FIXME: On windows, canonicalize returns "\\?\" (UNC Path)
@@ -66,9 +66,16 @@ pub fn quick_check(curr_dir: String){
                     error!("Title/Artist Missing: {}", song_file.get_filepath_str().unwrap());
                 }
 
-                let ext_count = file_collection.entry(safe_ext).or_insert(FileCount{num: 0, bytes:0});
+                let ext_count = file_collection.entry(safe_ext).or_insert(
+                    FileCount{num: 0, bytes:0, incomplete_metadata_count: 0, invalid_key_count: 0});
                 (*ext_count).num+=1;
                 (*ext_count).bytes+= fs::metadata(some_path).unwrap().len();
+                if !song_file.has_search_key(){
+                    (*ext_count).invalid_key_count += 1;
+                }
+                if !song_file.is_metadata_complete(){
+                    (*ext_count).incomplete_metadata_count+=1;
+                }
             }
         };
 
@@ -82,15 +89,20 @@ pub fn quick_check(curr_dir: String){
     let base : f64 = 1024.0;
     let mb = base.powi(2);
 
-    let mut total_size : u64 = 0;
-    let mut total_num = 0;
+    let mut file_count = FileCount{num: 0, bytes:0, incomplete_metadata_count: 0, invalid_key_count: 0};
+    println!("\nFILES:");
     for (key,val) in count.iter(){
-        info!("{:<3}: files={: <6} \t size={:.2}MB", key, val.num, val.bytes as f64 / mb);
-        total_num+=val.num;
-        total_size+=val.bytes;
+        println!(".{:<3}: files={: <6} size={:.2}MB", key, val.num, val.bytes as f64 / mb);
+        println!("\tFiles without Artist-Title: {:<6} Files with incomplete tags: {:<6}", val.invalid_key_count, val.incomplete_metadata_count);
+        file_count.num += val.num;
+        file_count.bytes += val.bytes;
+        file_count.incomplete_metadata_count = val.incomplete_metadata_count;
+        file_count.invalid_key_count = val.invalid_key_count;
     }
 
-    info!("TOTAL: {} files - {:.2} MB",total_num, total_size as f64 / mb);
+    println!("\nTOTAL: {} files - {:.2} MB", file_count.num, file_count.bytes as f64 / mb);
+    println!("\tFiles without Artist-Title: {:<6} Files with incomplete tags: {:<6}", 
+        file_count.invalid_key_count, file_count.incomplete_metadata_count);
 }
 
 pub fn fix_metadata(working_dir: String){
@@ -155,7 +167,7 @@ pub fn bulk_rename(working_dir: String){
 
 pub fn do_all(working_dir: String){
     //Do them all
-    quick_check(working_dir.clone());
+    path_check(working_dir.clone());
     fix_metadata(working_dir.clone());
     get_cover_art(working_dir.clone());
     bulk_rename(working_dir);
