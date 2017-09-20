@@ -100,14 +100,15 @@ fn main(){
                                     .about("Verify the given directory and print info about it"))
                         .subcommand(SubCommand::with_name("fix")
                                     .about("Do a full fix of all file metadata")
-                                    .arg(Arg::with_name("genre")
-                                        .short("g")
-                                        .long("genre")
-                                        .value_name("GENRE")
-                                        .help("Fix Genre Metadata as well")
-                                        .required(false)
-                                        .takes_value(false)))
-                        .subcommand(SubCommand::with_name("art")
+                                    // .arg(Arg::with_name("genre")
+                                    //     .short("g")
+                                    //     .long("genre")
+                                    //     .value_name("GENRE")
+                                    //     .help("Fix Genre Metadata as well")
+                                    //     .required(false)
+                                    //     .takes_value(false))
+                                    )
+                        .subcommand(SubCommand::with_name("cover-art")
                                     .about("Retrieve the cover art for all file, if possible"))
                         .subcommand(SubCommand::with_name("rename")
                                     .about("Rename files to a specifc format")
@@ -139,12 +140,11 @@ fn main(){
     let working_directory = String::from(args.value_of("directory").unwrap());
     info!("Working Directory: {}",working_directory);
 
-    //TODO: Pass the correct args into each function
     match args.subcommand_name() {
         Some("all")     => mop_act::do_all(working_directory),
         Some("check")   => mop_act::path_check(working_directory),
         Some("fix")     => mop_act::fix_metadata(working_directory),
-        Some("art")     => mop_act::get_cover_art(working_directory),
+        Some("cover-art")     => mop_act::get_cover_art(working_directory),
         Some("rename")  => {
             let format_string = String::from(args.value_of("format").unwrap_or("./%artist - %title"));
             mop_act::bulk_rename(working_directory, format_string);

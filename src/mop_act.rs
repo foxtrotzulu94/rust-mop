@@ -196,7 +196,11 @@ pub fn fix_metadata(working_dir: String){
 }
 
 pub fn get_cover_art(working_dir: String){
-    error!("Cover art retrieval is not yet implemented!");
+    //TODO: Implement cover art
+    // While it is not complicated to do the request and find the sources for this
+    // the rust-id3 library cannot handle querying of this field correctly
+    // and although there IS a new version out, it is not stable for use in this tool.
+    panic!("Cover art cannot be written to file in current release!");
 }
 
 pub fn bulk_rename(working_dir: String, format_string: String){
