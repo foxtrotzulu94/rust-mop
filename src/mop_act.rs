@@ -266,6 +266,6 @@ pub fn do_all(working_dir: String){
     //Do them all
     path_check(working_dir.clone());
     fix_metadata(working_dir.clone());
-    get_cover_art(working_dir.clone());
+    // get_cover_art(working_dir.clone());
     bulk_rename(working_dir, String::from("./%artist - %title"));
 }

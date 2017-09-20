@@ -15,13 +15,13 @@ fn find_artist_id(raw_data: &str) -> io::Result<String>{
     let mut confidence = 75;
 
     let data = XmlMap::from_str(raw_data);
-    let possible_artists = &data.root["metadata"]["artist-list"].get_matching_children("artist");
-
-    if possible_artists.len() < 1{
+    let artist_result = &data.root["metadata"]["artist-list"];
+    if artist_result.attributes["count"] == "0"{
         return Err(Error::new(ErrorKind::NotFound, "MusicBrainz: The Artist was not found"));
     }
 
-    for an_artist in *possible_artists{
+    let possible_artists = artist_result.get_matching_children("artist");
+    for an_artist in possible_artists{
         let mut some_artist_id = String::new();
         let mut curr_confidence=0;
         for (name, value) in an_artist.attributes.iter(){

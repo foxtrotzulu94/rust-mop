@@ -59,9 +59,17 @@ pub struct SongFile{
 impl SongFile{
     pub fn make(file_path : &Path) -> SongFile{
         //Build metadata first
-        let tag = Tag::read_from_path(file_path).unwrap();
+        let tag_result = Tag::read_from_path(file_path);
+
         let song = SongFile{
-            metadata: tag,
+            metadata: match tag_result {
+                Ok(tag) => tag,
+                Err(e) => {
+                    error!("No Valid Tags Loaded For {}", file_path.to_str().unwrap());
+                    error!("{}",e);
+                    Tag::with_version(3) //ID3v2.3
+                },
+            },
             extension: file_path.extension().unwrap().to_str().unwrap().to_string().to_lowercase(), 
             file_path: PathBuf::from(file_path),
             };
@@ -70,6 +78,7 @@ impl SongFile{
     }
 
     pub fn save(&mut self){
+        info!("Saving {}",self.get_filepath_str().unwrap());
         let result = self.metadata.write_to_path(self.file_path.as_path());
         //FIXME: Sometimes this returns "Permission Denied"
         //  It's very likely to be an error with the library
