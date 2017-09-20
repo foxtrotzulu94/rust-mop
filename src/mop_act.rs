@@ -203,16 +203,22 @@ pub fn bulk_rename(working_dir: String, format_string: String){
     let song_list = build_song_list(working_dir.clone(), &mut song_accumulator);
 
     let mut format_path = working_dir.clone();
+    //Check if working_dir has the ending '/'.
     match &working_dir.as_str()[..1]{
         "/" => (),
         _ => format_path.push_str("/"),
     }
-    //Treat the './' as the working directory    
-    format_path = format_string.replace("./",format_path.as_str());
+
+    let base_path = fs::canonicalize(working_dir.as_str()).unwrap();
+    let base_path_str = base_path.to_str().unwrap();
 
     //Just rename the files as they appear
     //FIXME: This is horribly inefficient...
     let build_new_path = |a_song: &SongFile| -> PathBuf{
+        //In cases where there are subdirectories, base_path == './some-subdir/
+        let base_path = a_song.get_filepath().parent().unwrap()
+                            .to_str().unwrap().replace(base_path_str,"./");
+
         let mut new_name = format_path.clone()
                 .replace("%artist", ntfs_safename!(a_song.metadata.artist().unwrap()).as_str())
                 .replace("%title", ntfs_safename!(a_song.metadata.title().unwrap()).as_str())
@@ -221,6 +227,9 @@ pub fn bulk_rename(working_dir: String, format_string: String){
                 .replace("%track", &a_song.metadata.track().unwrap_or(00).to_string());
         new_name.push_str(".");
         new_name.push_str(a_song.extension.as_str());
+        
+        //Treat the './' as the working directory
+        new_name = new_name.replace("./",&base_path);
         return PathBuf::from(new_name);
     };
 
