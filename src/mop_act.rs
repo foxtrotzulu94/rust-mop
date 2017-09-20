@@ -189,10 +189,10 @@ pub fn fix_metadata(working_dir: String){
     println!("\nAutomated fix completed - Pay attention below for unchanged/problematic files\n");
     for (failed_file, reason) in unchanged_files{
         println!("File '{}'", failed_file.get_filepath_str().unwrap());
-        println!("Reason: {}", reason);
+        println!("{}", reason);
     }
 
-    println!("{} files unchanged after fix", num_unchanged_files);
+    println!("{} files unchanged after fix\n", num_unchanged_files);
 }
 
 pub fn get_cover_art(working_dir: String){
@@ -214,9 +214,9 @@ pub fn bulk_rename(working_dir: String, format_string: String){
     //FIXME: This is horribly inefficient...
     let build_new_path = |a_song: &SongFile| -> PathBuf{
         let mut new_name = format_path.clone()
-                .replace("%artist", a_song.metadata.artist().unwrap())
-                .replace("%title", a_song.metadata.title().unwrap())
-                .replace("%album", a_song.metadata.album().unwrap_or("N/A"))
+                .replace("%artist", ntfs_safename!(a_song.metadata.artist().unwrap()).as_str())
+                .replace("%title", ntfs_safename!(a_song.metadata.title().unwrap()).as_str())
+                .replace("%album", ntfs_safename!(a_song.metadata.album().unwrap_or("N/A")).as_str())
                 .replace("%year", &a_song.metadata.year().unwrap_or(1969).to_string())
                 .replace("%track", &a_song.metadata.track().unwrap_or(00).to_string());
         new_name.push_str(".");

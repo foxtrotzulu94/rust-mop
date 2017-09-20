@@ -26,13 +26,33 @@ pub mod mop_macro{
     
     #[macro_export]
     macro_rules! safe_expand {
-    ($x:expr, $y:expr) => {
-        match $x{
-            None => $y,
-            Some(value) => value,
+        ($x:expr, $y:expr) => {
+            match $x{
+                None => $y,
+                Some(value) => value,
+            };
+        }
+    }
+
+    macro_rules! replace_all_for_one {
+        ($string:expr, $sub:expr, $($x:expr),+) => {
+            {
+                let mut ret_val : String = String::from($string);
+                $(
+                    ret_val = ret_val.replace($x, $sub);
+                )+
+
+                ret_val
+            }
         };
     }
-}
+
+    macro_rules! ntfs_safename {
+        ($s:expr) => {
+            replace_all_for_one!($s," ",
+                "/","\\",":","|","<",">","?","*","\"");
+        }
+    }
 }
 
 mod src_music_brainz;
@@ -63,19 +83,9 @@ fn init_logging(log_level: &str){
 }
 
 fn test_wrap(){
-    let testy = "<note>
-  <to>Tove</to>
-  <from>Jani</from>
-  <heading>Reminder</heading>
-  <body>Don't forget me this weekend!</body>
-</note>";
-    let wrappy = XmlMap::from_str(testy);
-    warn!("Built XML");
-    let init = wrappy.root;
-    warn!("Init");
-    let node = &init["note"]["to"];
-    warn!("Node val {}", node.value);
-    assert!(node.value=="Tove");
+    let testy = r#"</ ? < > \ : * | " and any character you can type with the Ctrl key"#;
+    let sanitized = ntfs_safename!(testy);
+    println!("{}", sanitized)
 }
 
 fn main(){
