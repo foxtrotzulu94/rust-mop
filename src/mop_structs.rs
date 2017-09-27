@@ -1,6 +1,6 @@
 //Basic data structures and their method implementations
 
-use id3::{Tag, /*Frame,*/ Timestamp};
+use id3::{Tag, /*Frame,*/ Timestamp, Version};
 // use id3::frame::Content;
 
 use std::fmt;
@@ -67,7 +67,7 @@ impl SongFile{
                 Err(e) => {
                     error!("No Valid Tags Loaded For {}", file_path.to_str().unwrap());
                     error!("{}",e);
-                    Tag::with_version(3) //ID3v2.3
+                    Tag::with_version(Version::Id3v24) //ID3v2.3
                 },
             },
             extension: file_path.extension().unwrap().to_str().unwrap().to_string().to_lowercase(), 
@@ -79,7 +79,7 @@ impl SongFile{
 
     pub fn save(&mut self){
         info!("Saving {}",self.get_filepath_str().unwrap());
-        let result = self.metadata.write_to_path(self.file_path.as_path());
+        let result = self.metadata.write_to_path(self.file_path.as_path(),self.metadata.version());
         //FIXME: Sometimes this returns "Permission Denied"
         //  It's very likely to be an error with the library
         match result {
@@ -107,7 +107,7 @@ impl SongFile{
         if year == 0{
             //If it doesn't have this tag, panic
             let some_date = safe_expand!(tag.date_recorded(), Timestamp::parse("0").unwrap());
-            year = safe_expand!(some_date.year,0) as usize;
+            year = some_date.year;
         }
 
         let album = safe_expand!(tag.album(), "");
@@ -136,8 +136,9 @@ impl SongFile{
 
     pub fn set_basic_metadata(&mut self, ext_data : BasicMetadata){
         let metadata = &mut self.metadata;
+        warn!("{}", ext_data);
         metadata.set_album(ext_data.album);
-        metadata.set_year(ext_data.date as usize);
+        metadata.set_year(ext_data.date);
         metadata.set_genre(ext_data.genre);
         metadata.set_track(ext_data.track_number);
 
