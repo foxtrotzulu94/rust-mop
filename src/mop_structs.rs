@@ -136,7 +136,7 @@ impl SongFile{
 
     pub fn set_basic_metadata(&mut self, ext_data : BasicMetadata){
         let metadata = &mut self.metadata;
-        warn!("{}", ext_data);
+        info!("{}", ext_data);
         metadata.set_album(ext_data.album);
         metadata.set_year(ext_data.date);
         metadata.set_genre(ext_data.genre);
